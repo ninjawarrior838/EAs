@@ -1,19 +1,17 @@
 import sys
 
-def parse( str ):
+
+def parse(str):
     config = open(str, 'r')
     datafile = config.readline()
     seedT = config.readline()
     evalNums = config.readline()
     runs = config.readline()
-    print seedT
-    return
+    return config, datafile, seedT, evalNums, runs
 
-if len(sys.argv) >= 2:
-    parse(sys.argv[-1])
-else:
-    parse('default.cfg')
 
-config = open('default.cfg', 'r')
-#for line in config:
-    #print line
+def main():
+    if len(sys.argv) >= 2:
+        cfg = parse(sys.argv[-1])
+    else:
+        cfg = parse('default.cfg')
