@@ -3,22 +3,6 @@ import random
 import time
 
 
-<<<<<<< HEAD
-def parse(str):
-    config = open(str, 'r')
-    datafile = config.readline()
-    seedT = config.readline()
-    evalNums = config.readline()
-    runs = config.readline()
-    return config, datafile, seedT, evalNums, runs
-
-
-def main():
-    if len(sys.argv) >= 2:
-        cfg = parse(sys.argv[-1])
-    else:
-        cfg = parse('default.cfg')
-=======
 def generateGraph(x):
     dFile = open(x, 'r')
     verticies = int(float(dFile.readline().strip()))
@@ -80,4 +64,3 @@ def main():
 
 if __name__ == '__main__':
     main()
->>>>>>> 3af25eedaca76cbb4855e673aa923529f385151d
