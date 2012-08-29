@@ -4,11 +4,8 @@ import time
 
 
 def generateGraph(x):
-    dFile = open(x, 'r')
-    verticies = int(float(dFile.readline().strip()))
-    edges = int(float(dFile.readline().strip()))
-    partition = (bin(random.randrange(0, 2**(verticies))))[2:]
-    return partition.zfill(verticies)
+    partition = (bin(random.randrange(0, 2 ** (x))))[2:]
+    return partition.zfill(x)
 
 
 def checkFitness(x, y, numEvals, test):
@@ -22,7 +19,7 @@ def getTime():
 
 
 def timer(x):
-    return ((int(round(time.time() * 1000))) -x)
+    return ((int(round(time.time() * 1000))) - x)
 
 
 def main():
@@ -53,11 +50,23 @@ def main():
         random.seed(int(float(seedT)))
     runs = int(float(config.readline().strip()))
     evals = int(float(config.readline().strip()))
-        #need to make the dictionary of edges
 
+    #need to make the dictionary of edges
+    data = {}
+    dFile = open(dataFile, 'r')
+    verticies = int(float(dFile.readline().strip()))
+    edges = int(float(dFile.readline().strip()))
+    for i in range(1, (verticies + 1)):
+        data[str(i)] = []
+    for lines in range(edges):
+        temp = dFile.readline().strip().split()
+        data[(temp[0])].append(temp[1])
+        data[(temp[1])].append(temp[0])
+    dFile.close()
     log.close()
+
     for run in range(runs):
-        test = generateGraph(dataFile)
+        test = generateGraph(verticies)
 
         checkFitness(answerFile, logFile, evals, test)
 
