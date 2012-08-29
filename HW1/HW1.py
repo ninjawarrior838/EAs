@@ -22,12 +22,14 @@ def checkFitness(x, y, numEvals, data, test):
             if(  str(num + 1 ) in data[str(pos + 1)] and test[num] != test[pos]):
                 numCuts += 1
 
-    if partition <= (len(test) / 2):
+    if partition <= 0:
+        return 100000
+    elif partition >= len(test):
+        return 100000
+    elif partition <= (len(test) / 2):
         partition = partition
-    elif partition < len(test):
-        partition = len(test) - partition
     else:
-        partition = 100000
+        partition = len(test) - partition
     return float(numCuts / 2) / partition
 
 
@@ -89,7 +91,6 @@ def main():
         #checkFitness(answerFile, logFile, evals, test)
     fitness = checkFitness(answerFile, logFile, evals, data, '10101100')  #best cut
     print fitness
-
 
 if __name__ == '__main__':
     main()
