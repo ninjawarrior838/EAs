@@ -90,6 +90,7 @@ def main():
         log.write('\n\nRun: ' + str(run + 1))
         localBestFit = 100000.0
         localBestCut = int
+        t = getTime()
 
         for checks in range(evals):
             test = generateGraph(verticies)
@@ -101,6 +102,7 @@ def main():
                 if localBestFit < bestFit:
                     bestFit = localBestFit
                     bestCut = localBestCut
+        print 'run: ', str(run), 'done in ', str(timer(t)), 'm seconds'
 
     answer = open(answerFile, 'w')
     answer.write(str(bestCut) + '\n' + str(bestFit))
