@@ -8,10 +8,27 @@ def generateGraph(x):
     return partition.zfill(x)
 
 
-def checkFitness(x, y, numEvals, test):
+def checkFitness(x, y, numEvals, data, test):
     answer = open(x, 'a')
     log = open(y, 'a')
-    return
+    #smallest partition
+    partition = 0
+    numCuts = 0
+
+    for num in range(len(test)):
+        if test[num] == '1':
+            partition += 1
+        for pos in range(len(test)):
+            if(  str(num + 1 ) in data[str(pos + 1)] and test[num] != test[pos]):
+                numCuts += 1
+
+    if partition <= (len(test) / 2):
+        partition = partition
+    elif partition < len(test):
+        partition = len(test) - partition
+    else:
+        partition = 100000
+    return float(numCuts / 2) / partition
 
 
 def getTime():
@@ -65,10 +82,13 @@ def main():
     dFile.close()
     log.close()
 
-    for run in range(runs):
-        test = generateGraph(verticies)
+    #print data
+    #for run in range(runs):
+        #test = generateGraph(verticies)
 
-        checkFitness(answerFile, logFile, evals, test)
+        #checkFitness(answerFile, logFile, evals, test)
+    fitness = checkFitness(answerFile, logFile, evals, data, '10101100')  #best cut
+    print fitness
 
 
 if __name__ == '__main__':
