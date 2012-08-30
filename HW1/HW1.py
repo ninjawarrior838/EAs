@@ -10,14 +10,12 @@ def generateGraph(x):
 
 def checkFitness(data, test):
     #smallest partition
-    partition = 0
+    partition = str(test).count('1')
     numCuts = 0
 
-    for num in range(len(test)):
-        if test[num] == '1':
-            partition += 1
-        for pos in range(len(test)):
-            if(str(num + 1) in data[str(pos + 1)] and test[num] != test[pos]):
+    for num in range(1, len(test) + 1):
+        for pos in range(len(data[str(num)])):
+            if test[num - 1] != test[int(data[str(num)][pos]) - 1]:
                 numCuts += 1
 
     if partition <= 0:
@@ -86,7 +84,7 @@ def main():
     #Run the program the correct number of times logging as it goes
     bestCut = int
     bestFit = 100000.0
-    for run in range(runs):
+    for run in range(1, runs + 1):
         log.write('\n\nRun: ' + str(run + 1))
         localBestFit = 100000.0
         localBestCut = int
