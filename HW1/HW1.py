@@ -3,16 +3,19 @@ import random
 import time
 
 
+#generates a random binary string of size x
 def generateGraph(x):
     partition = (bin(random.randrange(0, 2 ** (x))))[2:]
     return partition.zfill(x)
 
 
+#Takes in the data, and a test binary string and returns the lowest fitness
 def checkFitness(data, test):
     #smallest partition
     partition = str(test).count('1')
     numCuts = 0
 
+    #find the lowest number of cuts
     for num in range(1, len(test) + 1):
         for pos in range(len(data[str(num)])):
             if test[num - 1] != test[int(data[str(num)][pos]) - 1]:
@@ -29,10 +32,12 @@ def checkFitness(data, test):
     return float(numCuts / 2) / partition
 
 
+#returns the time in miliseconds
 def getTime():
     return int(round(time.time() * 1000))
 
 
+#returns the difference of the current time and x
 def timer(x):
     return ((int(round(time.time() * 1000))) - x)
 
@@ -81,11 +86,11 @@ def main():
         data[(temp[1])].append(temp[0])
     dFile.close()
 
-    #Run the program the correct number of times logging as it goes
+    #Run the program the correct number of times, logging as it goes
     bestCut = int
     bestFit = 100000.0
     for run in range(1, runs + 1):
-        log.write('\n\nRun: ' + str(run + 1))
+        log.write('\n\nRun: ' + str(run))
         localBestFit = 100000.0
         localBestCut = int
         t = getTime()
