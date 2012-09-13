@@ -32,9 +32,6 @@ def checkFitness(data, test):
     return float(numCuts / 2) / partition
 
 
-def checkFitnessl(data, test):
-    for child in range(0, len(test))
-
 #returns the time in miliseconds
 def getTime():
     return int(round(time.time() * 1000))
@@ -45,11 +42,13 @@ def timer(x):
     return ((int(round(time.time() * 1000))) - x)
 
 
+#returns a random bitstring according to the initialisation rule and number of verticies
 def getInitial(initialisation, verticies):
     if (initialisation == 'uniform random'):
         return generateRandGraph(verticies)
 
 
+#choses the parents according to the config file
 def getParents(parentSelection, k):
     if(parentSelection == 'fitness proportional'):
         return
@@ -100,7 +99,9 @@ def main():
     recombination = config.readline().strip()
     mutation = config.readline().strip()
     survivalSelection = config.readline().strip()
-    termination = config.readline().strip()
+    termination = int(config.readline().strip())
+    if (termination == 0):
+        termination = evals
 
     #make a dictionary of edges
     data = {}
@@ -115,20 +116,35 @@ def main():
         data[(temp[1])].append(temp[0])
     dFile.close()
 
-    #Run the program the correct number of times, logging as it goes
+    #primeing the main function with the initial values
     bestCut = int
     bestFit = 100000.0
     initial = {}
+    fit = {}
     for i in range(0, parents):
         initial[i] = getInitial(initialisation, verticies)
 
+    #Run the program the correct number of times, logging as it goes
     for run in range(1, runs + 1):
         log.write('\n\nRun: ' + str(run))
         localBestFit = 100000.0
         localBestCut = int
-        fit = {}
         t = getTime()
 
+        for checks in range(termination):
+
+            for i in range(0, parents):
+                fit[i] = checkFitness(data, initial[i])
+            #parent selection
+
+            #recombination
+
+            #mutation
+
+            #survivor selection
+
+            #termination
+"""
         for checks in range(evals):
             fitness = checkFitness(data, initial)
             if fitness < localBestFit:
@@ -139,7 +155,7 @@ def main():
                     bestFit = localBestFit
                     bestCut = localBestCut
         print 'run: ', str(run), 'done in ', str(timer(t)), 'm seconds'
-
+"""
     answer = open(answerFile, 'w')
     answer.write(str(bestCut) + '\n' + str(bestFit))
     print ('Done!')
