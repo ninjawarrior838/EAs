@@ -4,7 +4,7 @@ import time
 
 
 #generates a random binary string of size x
-def generateGraph(x):
+def generateRandGraph(x):
     partition = (bin(random.randrange(0, 2 ** (x))))[2:]
     return partition.zfill(x)
 
@@ -32,6 +32,9 @@ def checkFitness(data, test):
     return float(numCuts / 2) / partition
 
 
+def checkFitnessl(data, test):
+    for child in range(0, len(test))
+
 #returns the time in miliseconds
 def getTime():
     return int(round(time.time() * 1000))
@@ -40,6 +43,16 @@ def getTime():
 #returns the difference of the current time and x
 def timer(x):
     return ((int(round(time.time() * 1000))) - x)
+
+
+def getInitial(initialisation, verticies):
+    if (initialisation == 'uniform random'):
+        return generateRandGraph(verticies)
+
+
+def getParents(parentSelection, k):
+    if(parentSelection == 'fitness proportional'):
+        return
 
 
 def main():
@@ -69,18 +82,25 @@ def main():
         log.write(str(seedT))
         random.seed(int(float(seedT)))
 
-    #parsing for different algorithm arguements
-    representation = config.readline().strip()
-    initialisation = config.readline().strip()
-    parentSelection= config.readline().strip()
-    recombination = config.readline().strip()
-    mutation= config.readline().strip()
-    survivalSelection= config.readline().strip()
-    termination = config.readline().strip()
-
     #some initial parsing on the dat file
     runs = int(float(config.readline().strip()))
     evals = int(float(config.readline().strip()))
+    #lambda
+    parents = int(float(config.readline().strip()))
+    #mew
+    chlidren = int(float(config.readline().strip()))
+
+    #parsing for different algorithm arguements
+    representation = config.readline().strip()
+    initialisation = config.readline().strip()
+    parentSelection = config.readline().strip()
+    #if using k-Tournament Selection the next line should be k else nothing
+    if (parentSelection == 'k-Tournament Selection without replacement'):
+        k = config.readline().strip()
+    recombination = config.readline().strip()
+    mutation = config.readline().strip()
+    survivalSelection = config.readline().strip()
+    termination = config.readline().strip()
 
     #make a dictionary of edges
     data = {}
@@ -98,18 +118,22 @@ def main():
     #Run the program the correct number of times, logging as it goes
     bestCut = int
     bestFit = 100000.0
+    initial = {}
+    for i in range(0, parents):
+        initial[i] = getInitial(initialisation, verticies)
+
     for run in range(1, runs + 1):
         log.write('\n\nRun: ' + str(run))
         localBestFit = 100000.0
         localBestCut = int
+        fit = {}
         t = getTime()
 
         for checks in range(evals):
-            test = generateGraph(verticies)
-            fitness = checkFitness(data, test)
+            fitness = checkFitness(data, initial)
             if fitness < localBestFit:
                 localBestFit = fitness
-                localBestCut = test
+                localBestCut = initial
                 log.write('\n' + str(checks) + '\t' + str(localBestFit))
                 if localBestFit < bestFit:
                     bestFit = localBestFit
