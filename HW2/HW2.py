@@ -50,39 +50,50 @@ def getInitial(initialisation, verticies):
 
 
 #choses the parents according to the config file
-def getParents(parentSelection, k, population):
+def getParents(parentSelection, k, population, numParents):
     if(parentSelection == 'fitness proportional'):
         fitnessProportion = 0
+        survive = []
+        retval = []
         for cuts in population:
             fitnessProportion = fitnessProportion + cuts['fitness']
-
-        parents = sorted(population, key=itemgetter('fitness'), reverse=True)
-        return parents
+        for cuts in population:
+            survive.append((cuts['cut'], cuts['fitness'] / fitnessProportion))
+        parents = sorted(survive, key=itemgetter(1), reverse=True)[:numParents]
+        #parents = sorted(population, key=itemgetter('fitness'), reverse=True)
+        for i in parents:
+            retval.append(i[0])
+        return retval
 
 
 #returns a mutated version of the binary intager test input
-def mutate(test):
-    retval = list(str(test))
-    for bit in range(0, len(retval)):
-        if bool(random.getrandbits(1)) and retval[bit] == '0':
-            retval[bit] = '1'
-        elif bool(random.getrandbits(1)) and retval[bit] == '1':
-            retval[bit] = '0'
-        digits = [int(x) for x in retval]
+def mutate(mutation, test):
+    if (mutation == 'bit flip'):
+        retval = list(str(test))
+        for bit in range(0, len(retval)):
+            if bool(random.getrandbits(1)) and retval[bit] == '0':
+                retval[bit] = '1'
+            elif bool(random.getrandbits(1)) and retval[bit] == '1':
+                retval[bit] = '0'
+            digits = [int(x) for x in retval]
+    else:
+        print ('error! mutation is not defined correctly')
     return ''.join([str(x) for x in digits])
 
-""""
+
+#returns a recombined version of x and y according to the recombination variable
 def recombine(recombination, x, y,):
-    retval1 = list(str(x))
-    retval2 = list(str(y))
-    for bit in range(0, len(retval)):
-        if bool(random.getrandbits(1)) and retval[bit] == '0':
-            retval[bit] = '1'
-        elif bool(random.getrandbits(1)) and retval[bit] == '1':
-            retval[bit] = '0'
-        digits = [int(x) for x in retval]
-    return
-"""
+    if(recombination == 'uniform crossover'):
+        retval1 = list(str(x))
+        retval2 = list(str(y))
+        for bit in range(0, len(retval1)):
+            if bool(random.getrandbits(1)):
+                retval1[bit] = retval2[bit]
+            digits = [int(x) for x in retval1]
+    else:
+        print ('error! recombination is not defined correctly')
+    return ''.join([str(x) for x in digits])
+
 
 def main():
     # check for the last comand line argument
@@ -115,13 +126,13 @@ def main():
     runs = int(float(config.readline().strip()))
     evals = int(float(config.readline().strip()))
     #populaion
-    population = int(float(config.readline().strip()))
+    popSize = int(float(config.readline().strip()))
     #lambda
-    parents = int(float(config.readline().strip()))
+    numParents = int(float(config.readline().strip()))
     #mew
-    chlidren = int(float(config.readline().strip()))
+    numChlidren = int(float(config.readline().strip()))
     #survivor number
-    survivor = int(float(config.readline().strip()))
+    numSurvivor = int(float(config.readline().strip()))
 
     #parsing for different algorithm arguements
     representation = config.readline().strip()
@@ -159,7 +170,8 @@ def main():
     #Run the program the correct number of times, logging as it goes
     for run in range(1, runs + 1):
         population = []
-        for i in range(0, parents):
+        #create the initial population according to the initialisation
+        for i in range(0, popSize):
             combo = {}
             cut = getInitial(initialisation, verticies)
             combo['cut'] = cut
@@ -172,8 +184,8 @@ def main():
 
         #parent selection
         parents = []
-        parents = getParents(parentSelection, k, population)
-
+        parents = getParents(parentSelection, k, population, numParents)
+        print parents
         #recombination
 
         #mutation
