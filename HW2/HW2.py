@@ -52,6 +52,10 @@ def getInitial(initialisation, verticies):
 #choses the parents according to the config file
 def getParents(parentSelection, k, population):
     if(parentSelection == 'fitness proportional'):
+        fitnessProportion = 0
+        for cuts in population:
+            fitnessProportion = fitnessProportion + cuts['fitness']
+
         parents = sorted(population, key=itemgetter('fitness'), reverse=True)
         return parents
 
@@ -66,6 +70,19 @@ def mutate(test):
             retval[bit] = '0'
         digits = [int(x) for x in retval]
     return ''.join([str(x) for x in digits])
+
+""""
+def recombine(recombination, x, y,):
+    retval1 = list(str(x))
+    retval2 = list(str(y))
+    for bit in range(0, len(retval)):
+        if bool(random.getrandbits(1)) and retval[bit] == '0':
+            retval[bit] = '1'
+        elif bool(random.getrandbits(1)) and retval[bit] == '1':
+            retval[bit] = '0'
+        digits = [int(x) for x in retval]
+    return
+"""
 
 def main():
     # check for the last comand line argument
