@@ -1,6 +1,7 @@
 import sys
 import random
 import time
+from operator import itemgetter
 
 
 #generates a random binary string of size x
@@ -9,7 +10,7 @@ def generateRandGraph(x):
     return partition.zfill(x)
 
 
-#Takes in the data, and a test binary string and returns the lowest fitness
+#Takes in the data, and a test binary string and returns the highest negated fitness
 def checkFitness(data, test):
     #smallest partition
     partition = str(test).count('1')
@@ -22,14 +23,14 @@ def checkFitness(data, test):
                 numCuts += 1
 
     if partition <= 0:
-        return 100000
+        return -100000
     elif partition >= len(test):
-        return 100000
+        return -100000
     elif partition <= (len(test) / 2):
         partition = partition
     else:
         partition = len(test) - partition
-    return float(numCuts / 2) / partition
+    return (float(numCuts / 2) / partition) * (-1)
 
 
 #returns the time in miliseconds
@@ -49,10 +50,22 @@ def getInitial(initialisation, verticies):
 
 
 #choses the parents according to the config file
-def getParents(parentSelection, k):
+def getParents(parentSelection, k, population):
     if(parentSelection == 'fitness proportional'):
-        return
+        parents = sorted(population, key=itemgetter('fitness'), reverse=True)
+        return parents
 
+
+#returns a mutated version of the binary intager test input
+def mutate(test):
+    retval = list(str(test))
+    for bit in range(0, len(retval)):
+        if bool(random.getrandbits(1)) and retval[bit] == '0':
+            retval[bit] = '1'
+        elif bool(random.getrandbits(1)) and retval[bit] == '1':
+            retval[bit] = '0'
+        digits = [int(x) for x in retval]
+    return ''.join([str(x) for x in digits])
 
 def main():
     # check for the last comand line argument
@@ -84,10 +97,14 @@ def main():
     #some initial parsing on the dat file
     runs = int(float(config.readline().strip()))
     evals = int(float(config.readline().strip()))
+    #populaion
+    population = int(float(config.readline().strip()))
     #lambda
     parents = int(float(config.readline().strip()))
     #mew
     chlidren = int(float(config.readline().strip()))
+    #survivor number
+    survivor = int(float(config.readline().strip()))
 
     #parsing for different algorithm arguements
     representation = config.readline().strip()
@@ -96,6 +113,8 @@ def main():
     #if using k-Tournament Selection the next line should be k else nothing
     if (parentSelection == 'k-Tournament Selection without replacement'):
         k = config.readline().strip()
+    else:
+        k = 0
     recombination = config.readline().strip()
     mutation = config.readline().strip()
     survivalSelection = config.readline().strip()
@@ -118,32 +137,33 @@ def main():
 
     #primeing the main function with the initial values
     bestCut = int
-    bestFit = 100000.0
-    initial = {}
-    fit = {}
-    for i in range(0, parents):
-        initial[i] = getInitial(initialisation, verticies)
+    bestFit = -100000.0
 
     #Run the program the correct number of times, logging as it goes
     for run in range(1, runs + 1):
+        population = []
+        for i in range(0, parents):
+            combo = {}
+            cut = getInitial(initialisation, verticies)
+            combo['cut'] = cut
+            combo['fitness'] = checkFitness(data, cut)
+            population.append(combo)
         log.write('\n\nRun: ' + str(run))
-        localBestFit = 100000.0
-        localBestCut = int
         t = getTime()
 
-        for checks in range(termination):
+        #for checks in range(termination):
 
-            for i in range(0, parents):
-                fit[i] = checkFitness(data, initial[i])
-            #parent selection
+        #parent selection
+        parents = []
+        parents = getParents(parentSelection, k, population)
 
-            #recombination
+        #recombination
 
-            #mutation
+        #mutation
 
-            #survivor selection
+        #survivor selection
 
-            #termination
+        #termination
 """
         for checks in range(evals):
             fitness = checkFitness(data, initial)
@@ -155,10 +175,10 @@ def main():
                     bestFit = localBestFit
                     bestCut = localBestCut
         print 'run: ', str(run), 'done in ', str(timer(t)), 'm seconds'
-"""
+
     answer = open(answerFile, 'w')
     answer.write(str(bestCut) + '\n' + str(bestFit))
     print ('Done!')
-
+"""
 if __name__ == '__main__':
     main()
