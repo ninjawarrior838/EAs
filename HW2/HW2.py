@@ -148,6 +148,8 @@ def main():
         k = 0
     recombination = config.readline().strip()
     mutation = config.readline().strip()
+    #n is the how many runs to stop after if there is no change in the best cut
+    n = int(config.readline().strip())
 
     #make a dictionary of edges
     data = {}
@@ -179,6 +181,7 @@ def main():
         log.write('\n\nRun: ' + str(run))
         t = getTime()
 
+        history = []
         for checks in range(evals):
             #parent selection
             parents, children = [], []
@@ -217,6 +220,15 @@ def main():
             log.write('\n' + str(checks) + '\t' + str(sumAverage / (numChlidren + numParents)) + '\t' + str(localBest))
             average.write(str(sumAverage / (numChlidren + numParents)) + '\n')
             best.write(str(localBest) + '\n')
+            #Early termination if no change in n runs
+            history.append(localBest)
+            if (len(history) > n):
+                history.pop(0)
+                compare = history[:]
+                compare.sort()
+                if (compare[-1] == compare[0]):
+                    print 'early termination'
+                    return
         average.write('\n\n')
         best.write('\n\n')
         average.flush()
