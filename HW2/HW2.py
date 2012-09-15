@@ -58,7 +58,7 @@ def getParents(parentSelection, k, population, numParents):
             fitnessProportion = fitnessProportion + cuts['fitness']
         for cuts in population:
             survive.append((cuts['cut'], cuts['fitness'] / fitnessProportion))
-        parents = sorted(survive, key=itemgetter(1), reverse=True)[:numParents]
+        parents = sorted(survive, key=itemgetter(1))[:numParents]
         for i in parents:
             retval.append(i[0])
         return retval
@@ -69,9 +69,10 @@ def mutate(mutation, test):
     if (mutation == 'bit flip'):
         retval = list(str(test))
         for bit in range(0, len(retval)):
-            if bool(random.getrandbits(1)) and retval[bit] == '0':
+            flip = random.getrandbits(1)
+            if flip and retval[bit] == '0':
                 retval[bit] = '1'
-            elif bool(random.getrandbits(1)) and retval[bit] == '1':
+            elif flip and retval[bit] == '1':
                 retval[bit] = '0'
             digits = [int(x) for x in retval]
     else:
@@ -160,8 +161,6 @@ def main():
     dFile.close()
 
     #primeing the main function with the initial values
-    bestCut = int
-    bestFit = -100000.0
     population = []
     for i in range(0, popSize):
         combo = {}
@@ -208,8 +207,9 @@ def main():
                 population.append(combo)
             for cuts in population:
                 sumAverage = sumAverage + cuts['fitness']
-            localBest = sorted(population, key=itemgetter('fitness'), reverse=True)
-
+            ordered = sorted(population, key=itemgetter('fitness'))
+            localBest = ordered[-1]['fitness']
+            log.write('\n' + str(checks) + '\t' + str(sumAverage / (numChlidren + numParents)) + '\t' + str(localBest))
             print 'run: ', str(run), 'done in ', str(timer(t)), 'm seconds'
     print ('Done!')
 """
