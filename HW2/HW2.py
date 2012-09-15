@@ -167,6 +167,8 @@ def main():
     #Run the program the correct number of times, logging as it goes
     average = open(averageFile, 'w')
     best = open(bestFile, 'w')
+    globalBest = -100000.0
+    globalBestCut = int
     for run in range(1, runs + 1):
     #reinitialise the population every run
         population = []
@@ -237,6 +239,9 @@ def main():
         best.write('\n\n')
         average.flush()
         best.flush()
+        if (localBest > globalBest):
+            globalBest = localBest
+            globalBestCut = localBestCut
         print 'run: ', str(run), 'done in ', str(timer(t)), 'm seconds'
 
     log.close()
@@ -244,7 +249,7 @@ def main():
     best.close()
 
     answer = open(answerFile, 'w')
-    answer.write(str(localBestCut) + '\n' + str(localBest))
+    answer.write(str(globalBestCut) + '\n' + str(globalBest))
 
     print ('Done!')
 
