@@ -181,8 +181,12 @@ def main():
         log.write('\n\nRun: ' + str(run))
         t = getTime()
 
-        history = []
+        history, done = [], False
         for checks in range(evals):
+            #termination conditon
+            if (done):
+                print 'early termination'
+                break
             #parent selection
             parents, children = [], []
             parents = getParents(parentSelection, k, population, numParents)
@@ -202,7 +206,6 @@ def main():
                 children.append(mutantChild)
 
             oldPopulation = parents + children
-            #termination
 
             #evaluate new fitnesses
             population, sumAverage = [], 0
@@ -220,6 +223,7 @@ def main():
             log.write('\n' + str(checks) + '\t' + str(sumAverage / (numChlidren + numParents)) + '\t' + str(localBest))
             average.write(str(sumAverage / (numChlidren + numParents)) + '\n')
             best.write(str(localBest) + '\n')
+
             #Early termination if no change in n runs
             history.append(localBest)
             if (len(history) > n):
@@ -227,8 +231,8 @@ def main():
                 compare = history[:]
                 compare.sort()
                 if (compare[-1] == compare[0]):
-                    print 'early termination'
-                    return
+                    done = True
+
         average.write('\n\n')
         best.write('\n\n')
         average.flush()
