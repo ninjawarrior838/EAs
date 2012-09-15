@@ -53,14 +53,12 @@ def getInitial(initialisation, verticies):
 def getParents(parentSelection, k, population, numParents):
     if(parentSelection == 'fitness proportional'):
         fitnessProportion = 0
-        survive = []
-        retval = []
+        survive, retval = [], []
         for cuts in population:
             fitnessProportion = fitnessProportion + cuts['fitness']
         for cuts in population:
             survive.append((cuts['cut'], cuts['fitness'] / fitnessProportion))
         parents = sorted(survive, key=itemgetter(1), reverse=True)[:numParents]
-        #parents = sorted(population, key=itemgetter('fitness'), reverse=True)
         for i in parents:
             retval.append(i[0])
         return retval
@@ -84,15 +82,19 @@ def mutate(mutation, test):
 #returns a recombined version of x and y according to the recombination variable
 def recombine(recombination, x, y,):
     if(recombination == 'uniform crossover'):
-        retval1 = list(str(x))
-        retval2 = list(str(y))
-        for bit in range(0, len(retval1)):
+        val1 = list(str(x))
+        val2 = list(str(y))
+        retval = []
+        for bit in range(0, len(val1)):
             if bool(random.getrandbits(1)):
-                retval1[bit] = retval2[bit]
-            digits = [int(x) for x in retval1]
+                val1[bit], val2[bit] = val2[bit], val1[bit]
+            digits1 = [int(x) for x in val1]
+            digits2 = [int(x) for x in val2]
     else:
         print ('error! recombination is not defined correctly')
-    return ''.join([str(x) for x in digits])
+    retval.append(''.join([str(x) for x in digits1]))
+    retval.append(''.join([str(x) for x in digits2]))
+    return retval
 
 
 def main():
@@ -131,8 +133,6 @@ def main():
     numParents = int(float(config.readline().strip()))
     #mew
     numChlidren = int(float(config.readline().strip()))
-    #survivor number
-    numSurvivor = int(float(config.readline().strip()))
 
     #parsing for different algorithm arguements
     representation = config.readline().strip()
@@ -145,10 +145,6 @@ def main():
         k = 0
     recombination = config.readline().strip()
     mutation = config.readline().strip()
-    survivalSelection = config.readline().strip()
-    termination = int(config.readline().strip())
-    if (termination == 0):
-        termination = evals
 
     #make a dictionary of edges
     data = {}
@@ -166,33 +162,56 @@ def main():
     #primeing the main function with the initial values
     bestCut = int
     bestFit = -100000.0
+    population = []
+    for i in range(0, popSize):
+        combo = {}
+        cut = getInitial(initialisation, verticies)
+        combo['cut'] = cut
+        combo['fitness'] = checkFitness(data, cut)
+        population.append(combo)
 
     #Run the program the correct number of times, logging as it goes
     for run in range(1, runs + 1):
-        population = []
         #create the initial population according to the initialisation
-        for i in range(0, popSize):
-            combo = {}
-            cut = getInitial(initialisation, verticies)
-            combo['cut'] = cut
-            combo['fitness'] = checkFitness(data, cut)
-            population.append(combo)
         log.write('\n\nRun: ' + str(run))
         t = getTime()
 
-        #for checks in range(termination):
+        for checks in range(evals):
+            #parent selection
+            parents, children = [], []
+            parents = getParents(parentSelection, k, population, numParents)
 
-        #parent selection
-        parents = []
-        parents = getParents(parentSelection, k, population, numParents)
-        print parents
-        #recombination
+            #recombination
+            while (len(children) < (numChlidren / 2)):
+                mom = random.randrange(0, len(parents) - 1)
+                dad = random.randrange(0, len(parents) - 1)
+                if (mom != dad):
+                    children = children + recombine(recombination, parents[mom], parents[dad])
 
-        #mutation
+            #mutation
+            mutantChildren = children[:]
+            while (len(children) < numChlidren):
+                mutantChild = mutantChildren.pop()
+                mutantChild = mutate(mutation, mutantChild)
+                children.append(mutantChild)
 
-        #survivor selection
+            oldPopulation = parents + children
+            #termination
 
-        #termination
+            #evaluate new fitnesses
+            population, sumAverage = [], 0
+            while (len(oldPopulation) > 0):
+                combo = {}
+                cut = oldPopulation.pop()
+                combo['cut'] = cut
+                combo['fitness'] = checkFitness(data, cut)
+                population.append(combo)
+            for cuts in population:
+                sumAverage = sumAverage + cuts['fitness']
+            localBest = sorted(population, key=itemgetter('fitness'), reverse=True)
+
+            print 'run: ', str(run), 'done in ', str(timer(t)), 'm seconds'
+    print ('Done!')
 """
         for checks in range(evals):
             fitness = checkFitness(data, initial)
@@ -207,7 +226,7 @@ def main():
 
     answer = open(answerFile, 'w')
     answer.write(str(bestCut) + '\n' + str(bestFit))
-    print ('Done!')
 """
+
 if __name__ == '__main__':
     main()
