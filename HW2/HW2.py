@@ -114,6 +114,8 @@ def main():
     dataFile = config.readline().strip()
     log.write("Using data file: " + dataFile)
 
+    averageFile = config.readline().strip()
+    bestFile = config.readline().strip()
     # check if a seed is provided, if 0, seed random from time in miliseconds
     seedT = config.readline().strip()
     if (seedT) == '0':
@@ -160,17 +162,19 @@ def main():
         data[(temp[1])].append(temp[0])
     dFile.close()
 
-    #primeing the main function with the initial values
-    population = []
-    for i in range(0, popSize):
-        combo = {}
-        cut = getInitial(initialisation, verticies)
-        combo['cut'] = cut
-        combo['fitness'] = checkFitness(data, cut)
-        population.append(combo)
-
     #Run the program the correct number of times, logging as it goes
+    average = open(averageFile, 'w')
+    best = open(bestFile, 'w')
     for run in range(1, runs + 1):
+    #reinitialise the population every run
+        population = []
+        for i in range(0, popSize):
+            combo = {}
+            cut = getInitial(initialisation, verticies)
+            combo['cut'] = cut
+            combo['fitness'] = checkFitness(data, cut)
+            population.append(combo)
+
         #create the initial population according to the initialisation
         log.write('\n\nRun: ' + str(run))
         t = getTime()
@@ -209,24 +213,25 @@ def main():
                 sumAverage = sumAverage + cuts['fitness']
             ordered = sorted(population, key=itemgetter('fitness'))
             localBest = ordered[-1]['fitness']
+            localBestCut = ordered[-1]['cut']
             log.write('\n' + str(checks) + '\t' + str(sumAverage / (numChlidren + numParents)) + '\t' + str(localBest))
-            print 'run: ', str(run), 'done in ', str(timer(t)), 'm seconds'
-    print ('Done!')
-"""
-        for checks in range(evals):
-            fitness = checkFitness(data, initial)
-            if fitness < localBestFit:
-                localBestFit = fitness
-                localBestCut = initial
-                log.write('\n' + str(checks) + '\t' + str(localBestFit))
-                if localBestFit < bestFit:
-                    bestFit = localBestFit
-                    bestCut = localBestCut
+            average.write(str(sumAverage / (numChlidren + numParents)) + '\n')
+            best.write(str(localBest) + '\n')
+        average.write('\n\n')
+        best.write('\n\n')
+        average.flush()
+        best.flush()
         print 'run: ', str(run), 'done in ', str(timer(t)), 'm seconds'
 
+    log.close()
+    average.close()
+    best.close()
+
     answer = open(answerFile, 'w')
-    answer.write(str(bestCut) + '\n' + str(bestFit))
-"""
+    answer.write(str(localBestCut) + '\n' + str(localBest))
+
+    print ('Done!')
+
 
 if __name__ == '__main__':
     main()
