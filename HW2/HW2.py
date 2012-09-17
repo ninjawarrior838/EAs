@@ -63,6 +63,20 @@ def getParents(parentSelection, k, population, numParents):
             retval.append(i[0])
         return retval
 
+    elif(parentSelection == 'k-Tournament Selection without replacement'):
+        retval = []
+        while (len(retval) < numParents):
+            tournament = []
+            while (len(tournament) < k):
+                #fill tourament
+                chalenger = random.randrange(0, len(population) - 1)
+                #tournament.append(population[chalenger]['cut'])
+                tournament.append(population[chalenger])
+            #pick top one
+            ordered = sorted(tournament, key=itemgetter('fitness'))
+            retval.append(ordered[0]['cut'])
+        return retval
+
 
 #returns a mutated version of the binary intager test input
 def mutate(mutation, test):
@@ -81,7 +95,7 @@ def mutate(mutation, test):
 
 
 #returns a recombined version of x and y according to the recombination variable
-def recombine(recombination, x, y,):
+def recombine(recombination, n, x, y,):
     if(recombination == 'uniform crossover'):
         val1 = list(str(x))
         val2 = list(str(y))
@@ -89,6 +103,16 @@ def recombine(recombination, x, y,):
         for bit in range(0, len(val1)):
             if bool(random.getrandbits(1)):
                 val1[bit], val2[bit] = val2[bit], val1[bit]
+            digits1 = [int(x) for x in val1]
+            digits2 = [int(x) for x in val2]
+
+    elif (recombination == 'n-point crossover'):
+        val1 = list(str(x))
+        val2 = list(str(y))
+        retval = []
+        index = random.randrange(0, len(val1) - n)
+        for bit in range(0, n):
+            val1[index + bit], val2[index + bit] = val2[index + bit], val1[index + bit]
             digits1 = [int(x) for x in val1]
             digits2 = [int(x) for x in val2]
     else:
@@ -141,15 +165,12 @@ def main():
     representation = config.readline().strip()
     initialisation = config.readline().strip()
     parentSelection = config.readline().strip()
-    #if using k-Tournament Selection the next line should be k else nothing
-    if (parentSelection == 'k-Tournament Selection without replacement'):
-        k = config.readline().strip()
-    else:
-        k = 0
+    k = int(config.readline().strip())
     recombination = config.readline().strip()
-    mutation = config.readline().strip()
-    #n is the how many runs to stop after if there is no change in the best cut
     n = int(config.readline().strip())
+    mutation = config.readline().strip()
+    #stop is the how many runs to stop after if there is no change in the best cut
+    stop = int(config.readline().strip())
 
     #make a dictionary of edges
     data = {}
@@ -198,7 +219,7 @@ def main():
                 mom = random.randrange(0, len(parents) - 1)
                 dad = random.randrange(0, len(parents) - 1)
                 if (mom != dad):
-                    children = children + recombine(recombination, parents[mom], parents[dad])
+                    children = children + recombine(recombination, n, parents[mom], parents[dad])
 
             #mutation
             mutantChildren = children[:]
@@ -228,7 +249,7 @@ def main():
 
             #Early termination if no change in n runs
             history.append(localBest)
-            if (len(history) > n):
+            if (len(history) > stop):
                 history.pop(0)
                 compare = history[:]
                 compare.sort()
@@ -252,7 +273,6 @@ def main():
     answer.write(str(globalBestCut) + '\n' + str(globalBest))
 
     print ('Done!')
-
 
 if __name__ == '__main__':
     main()
