@@ -11,26 +11,33 @@ def generateRandGraph(x):
 
 
 #Takes in the data, and a test binary string and returns the highest negated fitness
-def checkFitness(data, test):
-    #smallest partition
-    partition = str(test).count('1')
-    numCuts = 0
+def checkFitness(fitFunction, data, test):
+    if(fitFunction == 'origional'):
+        #smallest partition
+        partition = str(test).count('1')
+        numCuts = 0
 
-    #find the lowest number of cuts
-    for num in range(1, len(test) + 1):
-        for pos in range(len(data[str(num)])):
-            if test[num - 1] != test[int(data[str(num)][pos]) - 1]:
-                numCuts += 1
+        #find the lowest number of cuts
+        for num in range(1, len(test) + 1):
+            for pos in range(len(data[str(num)])):
+                if test[num - 1] != test[int(data[str(num)][pos]) - 1]:
+                    numCuts += 1
 
-    if partition <= 0:
-        return -100000
-    elif partition >= len(test):
-        return -100000
-    elif partition <= (len(test) / 2):
-        partition = partition
-    else:
-        partition = len(test) - partition
-    return (float(numCuts / 2) / partition) * (-1)
+        if partition <= 0:
+            return -100000
+        elif partition >= len(test):
+            return -100000
+        elif partition <= (len(test) / 2):
+            partition = partition
+        else:
+            partition = len(test) - partition
+        return (float(numCuts / 2) / partition) * (-1)
+
+    elif(fitFunction == 'subgraphs'):
+        explored, explorable, reachable = [], [], []
+        explored.zfill(len(test))
+        for i in test:
+            if(i == )
 
 
 #returns the time in miliseconds
@@ -162,6 +169,7 @@ def main():
     numChlidren = int(float(config.readline().strip()))
 
     #parsing for different algorithm arguements
+    fitFunction = config.readline().strip()
     representation = config.readline().strip()
     initialisation = config.readline().strip()
     parentSelection = config.readline().strip()
@@ -199,7 +207,7 @@ def main():
             combo = {}
             cut = getInitial(initialisation, verticies)
             combo['cut'] = cut
-            combo['fitness'] = checkFitness(data, cut)
+            combo['fitness'] = checkFitness(fitFunction, data, cut)
             population.append(combo)
 
         #create the initial population according to the initialisation
@@ -243,7 +251,7 @@ def main():
                 combo = {}
                 cut = oldPopulation.pop()
                 combo['cut'] = cut
-                combo['fitness'] = checkFitness(data, cut)
+                combo['fitness'] = checkFitness(fitFunction, data, cut)
                 population.append(combo)
             for cuts in population:
                 sumAverage = sumAverage + cuts['fitness']
