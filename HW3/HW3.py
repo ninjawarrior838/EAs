@@ -169,6 +169,8 @@ def main():
     recombination = config.readline().strip()
     n = int(config.readline().strip())
     mutation = config.readline().strip()
+    survivalStrategy = config.readline().strip()
+    survivalSelection = config.readline().strip()
     #stop is the how many runs to stop after if there is no change in the best cut
     stop = int(config.readline().strip())
 
@@ -228,7 +230,12 @@ def main():
                 mutantChild = mutate(mutation, mutantChild)
                 children.append(mutantChild)
 
-            oldPopulation = parents + children
+            if(survivalStrategy == 'plus'):
+                oldPopulation = parents + children
+            elif(survivalStrategy == 'comma'):
+                oldPopulation = children
+            else:
+                print 'Error: no survival strategy selected'
 
             #evaluate new fitnesses
             population, sumAverage = [], 0
@@ -246,6 +253,8 @@ def main():
             log.write('\n' + str(checks) + '\t' + str(sumAverage / (numChlidren + numParents)) + '\t' + str(localBest))
             average.write(str(sumAverage / (numChlidren + numParents)) + '\n')
             best.write(str(localBest) + '\n')
+
+            #Survival Selection
 
             #Early termination if no change in n runs
             history.append(localBest)
