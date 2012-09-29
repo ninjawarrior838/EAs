@@ -9,6 +9,22 @@ def generateRandGraph(x):
     partition = (bin(random.randrange(0, 2 ** (x))))[2:]
     return partition.zfill(x)
 
+#returns the number of subgraphs
+def isConnected(test, data, numCuts):
+    explore, subgraphs = [], 0
+    while(test):
+        explore.append(test.pop())
+        print test
+        while(explore):
+            for i in data[str(explore[0])]:
+                if i in test:
+                    explore.append(i)
+                    test.remove(i)
+                else:
+                    numCuts = numCuts + 1
+            explore.pop(0)
+        subgraphs = subgraphs + 1
+    return subgraphs
 
 #Takes in the data, and a test binary string and returns the highest negated fitness
 def checkFitness(fitFunction, data, test):
@@ -32,13 +48,18 @@ def checkFitness(fitFunction, data, test):
         else:
             partition = len(test) - partition
         return (float(numCuts / 2) / partition) * (-1)
-'''
+
     elif(fitFunction == 'subgraphs'):
-        explored, explorable, reachable = [], [], []
-        explored.zfill(len(test))
-        for i in test:
-            if(i == )
-'''
+        test1, test2, subgraphs, numCuts = [], [], 0, 0
+        for i in range(1, len(test) + 1):
+            if(test[i - 1] == '1'):
+                test1.append(i)
+            else:
+                test2.append(i)
+        subgraphs = isConnected(test1, data, numCuts)
+        subgraphs = subgraphs + isConnected(test2, data, numCuts)
+        print subgraphs
+        return 5
 
 #returns the time in miliseconds
 def getTime():
@@ -194,6 +215,7 @@ def main():
         data[(temp[1])].append(temp[0])
     dFile.close()
 
+    checkFitness(fitFunction, data, '11010011')
     #Run the program the correct number of times, logging as it goes
     average = open(averageFile, 'w')
     best = open(bestFile, 'w')
