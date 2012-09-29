@@ -14,17 +14,17 @@ def isConnected(test, data, numCuts):
     explore, subgraphs = [], 0
     while(test):
         explore.append(test.pop())
-        print test
         while(explore):
             for i in data[str(explore[0])]:
-                if i in test:
-                    explore.append(i)
-                    test.remove(i)
+                if int(i) in test:
+                    explore.append(int(i))
+                    test.remove(int(i))
                 else:
                     numCuts = numCuts + 1
             explore.pop(0)
         subgraphs = subgraphs + 1
     return subgraphs
+
 
 #Takes in the data, and a test binary string and returns the highest negated fitness
 def checkFitness(fitFunction, data, test):
@@ -215,7 +215,8 @@ def main():
         data[(temp[1])].append(temp[0])
     dFile.close()
 
-    checkFitness(fitFunction, data, '11010011')
+    checkFitness(fitFunction, data, '1011011')
+    print '\n\n\n'
     #Run the program the correct number of times, logging as it goes
     average = open(averageFile, 'w')
     best = open(bestFile, 'w')
