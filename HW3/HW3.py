@@ -32,13 +32,13 @@ def checkFitness(fitFunction, data, test):
         else:
             partition = len(test) - partition
         return (float(numCuts / 2) / partition) * (-1)
-
+'''
     elif(fitFunction == 'subgraphs'):
         explored, explorable, reachable = [], [], []
         explored.zfill(len(test))
         for i in test:
             if(i == )
-
+'''
 
 #returns the time in miliseconds
 def getTime():
@@ -77,7 +77,6 @@ def getParents(parentSelection, k, population, numParents):
             while (len(tournament) < k):
                 #fill tourament
                 chalenger = random.randrange(0, len(population) - 1)
-                #tournament.append(population[chalenger]['cut'])
                 tournament.append(population[chalenger])
             #pick top one
             ordered = sorted(tournament, key=itemgetter('fitness'))
@@ -178,7 +177,7 @@ def main():
     n = int(config.readline().strip())
     mutation = config.readline().strip()
     survivalStrategy = config.readline().strip()
-    survivalSelection = config.readline().strip()
+    #survivalSelection = config.readline().strip()
     #stop is the how many runs to stop after if there is no change in the best cut
     stop = int(config.readline().strip())
 
