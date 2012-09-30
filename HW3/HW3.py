@@ -11,7 +11,7 @@ def generateRandGraph(x):
 
 
 #returns the number of subgraphs
-def isConnected(test, data, numCuts):
+def isConnected(test, data):
     explore, subgraphs = [], 0
     while(test):
         explore.append(test.pop())
@@ -20,8 +20,6 @@ def isConnected(test, data, numCuts):
                 if int(i) in test:
                     explore.append(int(i))
                     test.remove(int(i))
-                else:
-                    numCuts = numCuts + 1
             explore.pop(0)
         subgraphs = subgraphs + 1
     return subgraphs
@@ -56,8 +54,8 @@ def checkFitness(fitFunction, data, test, penalty):
                 test1.append(i)
             else:
                 test2.append(i)
-        subgraphs = isConnected(test1, data, numCuts)
-        subgraphs = subgraphs + isConnected(test2, data, numCuts)
+        subgraphs = isConnected(test1, data)
+        subgraphs = subgraphs + isConnected(test2, data)
     else:
         return fitness
     return (fitness - ((subgraphs - 2) * (penalty)))
@@ -193,7 +191,7 @@ def selectSurvivors(survivalSelection, population, numSurvive, k):
                     tournament.append(population[chalenger])
             #pick top one
             ordered = sorted(tournament, key=itemgetter('fitness'))
-            retval.append(ordered[0]['cut'])
+            retval.append(ordered[0])
         return retval
 
     elif(survivalSelection == 'k-Tournament Selection with replacement'):
@@ -205,18 +203,19 @@ def selectSurvivors(survivalSelection, population, numSurvive, k):
                 tournament.append(population[chalenger])
             #pick top one
             ordered = sorted(tournament, key=itemgetter('fitness'))
-            retval.append(ordered[0]['cut'])
+            retval.append(ordered[0])
         return retval
 
     elif(survivalSelection == 'uniform random'):
         while (len(retval) < numSurvive):
             chalenger = random.randrange(0, len(population) - 1)
             if(population[chalenger] not in retval):
-                retval.append(population[chalenger]['cut'])
+                retval.append(population[chalenger])
         return retval
 
     elif(survivalSelection == 'truncation'):
         ordered = sorted(population, key=itemgetter('fitness'))
+        return ordered[:numSurvive]
 
 
 def main():
@@ -270,7 +269,7 @@ def main():
     mutation = config.readline().strip()
     survivalStrategy = config.readline().strip()
     survivalSelection = config.readline().strip()
-    numSurvive = int(config.readline().strip())
+    numSurvive = popSize
     #stop is the how many runs to stop after if there is no change in the best cut
     stop = int(config.readline().strip())
 
@@ -347,15 +346,15 @@ def main():
                 population.append(combo)
             for cuts in population:
                 sumAverage = sumAverage + cuts['fitness']
-            #ordered = sorted(population, key=itemgetter('fitness'))
-            #localBest = ordered[-1]['fitness']
-            #localBestCut = ordered[-1]['cut']
-            #log.write('\n' + str(checks) + '\t' + str(sumAverage / (numChlidren + numParents)) + '\t' + str(localBest))
-            #average.write(str(sumAverage / (numChlidren + numParents)) + '\n')
-            #best.write(str(localBest) + '\n')
 
             #Survival Selection
-            selectSurvivors(survivalSelection, population, numSurvive, k)
+            population = selectSurvivors(survivalSelection, population, numSurvive, k)
+            ordered = sorted(population, key=itemgetter('fitness'))
+            localBest = ordered[-1]['fitness']
+            localBestCut = ordered[-1]['cut']
+            log.write('\n' + str(checks) + '\t' + str(sumAverage / (numChlidren + numParents)) + '\t' + str(localBest))
+            average.write(str(sumAverage / (numChlidren + numParents)) + '\n')
+            best.write(str(localBest) + '\n')
 
             #Early termination if no change in n runs
             history.append(localBest)
