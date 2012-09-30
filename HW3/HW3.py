@@ -100,7 +100,7 @@ def getParents(parentSelection, k, population, numParents):
                 if(population[chalenger] not in tournament):
                     tournament.append(population[chalenger])
             #pick top one
-            ordered = sorted(tournament, key=itemgetter('fitness'))
+            ordered = sorted(tournament, key=itemgetter('fitness'), reverse=True)
             retval.append(ordered[0]['cut'])
         return retval
 
@@ -112,7 +112,7 @@ def getParents(parentSelection, k, population, numParents):
                 chalenger = random.randrange(0, len(population) - 1)
                 tournament.append(population[chalenger])
             #pick top one
-            ordered = sorted(tournament, key=itemgetter('fitness'))
+            ordered = sorted(tournament, key=itemgetter('fitness'), reverse=True)
             retval.append(ordered[0]['cut'])
         return retval
 
@@ -190,7 +190,7 @@ def selectSurvivors(survivalSelection, population, numSurvive, k):
                 if(population[chalenger] not in tournament):
                     tournament.append(population[chalenger])
             #pick top one
-            ordered = sorted(tournament, key=itemgetter('fitness'))
+            ordered = sorted(tournament, key=itemgetter('fitness'), reverse=True)
             retval.append(ordered[0])
         return retval
 
@@ -202,7 +202,7 @@ def selectSurvivors(survivalSelection, population, numSurvive, k):
                 chalenger = random.randrange(0, len(population) - 1)
                 tournament.append(population[chalenger])
             #pick top one
-            ordered = sorted(tournament, key=itemgetter('fitness'))
+            ordered = sorted(tournament, key=itemgetter('fitness'), reverse=True)
             retval.append(ordered[0])
         return retval
 
@@ -214,7 +214,7 @@ def selectSurvivors(survivalSelection, population, numSurvive, k):
         return retval
 
     elif(survivalSelection == 'truncation'):
-        ordered = sorted(population, key=itemgetter('fitness'))
+        ordered = sorted(population, key=itemgetter('fitness'), reverse=True)
         return ordered[:numSurvive]
 
 
