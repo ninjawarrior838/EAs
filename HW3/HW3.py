@@ -140,7 +140,7 @@ def mutate(mutation, test):
 
 
 #returns a recombined version of x and y according to the recombination variable
-def recombine(recombination, n, x, y,):
+def recombine(recombination, n, x, y):
     if(recombination == 'uniform crossover'):
         val1 = list(str(x))
         val2 = list(str(y))
@@ -364,14 +364,14 @@ def main():
                 compare.sort()
                 if (compare[-1] == compare[0]):
                     done = True
+            if (localBest > globalBest):
+                globalBest = localBest
+                globalBestCut = localBestCut
 
         average.write('\n\n')
         best.write('\n\n')
         average.flush()
         best.flush()
-        if (localBest > globalBest):
-            globalBest = localBest
-            globalBestCut = localBestCut
         print 'run: ', str(run), 'done in ', str(timer(t)), 'm seconds'
 
     log.close()
