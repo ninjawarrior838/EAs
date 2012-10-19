@@ -1,6 +1,7 @@
 import sys
 import random
 import time
+import pdb
 from operator import itemgetter
 
 
@@ -8,6 +9,39 @@ from operator import itemgetter
 def generateRandGraph(x):
     partition = (bin(random.randrange(0, 2 ** (x))))[2:]
     return partition.zfill(x)
+
+#returns true if x dominates y
+def dominates(x, y):
+    if x['numerator'] <= y['numerator'] and x['denominator'] > y['denominator']:
+        return True
+    elif x['numerator'] < y['numerator'] and x['denominator'] >= y['denominator']:
+        return True
+    else:
+        return False
+
+
+#appends the domination level to each cut in the population
+def getDomList(population):
+    #pdb.set_trace()
+    pop, dominatesRef, dominatedRef = [], [], []
+    row = 1
+    for cuts in range(0, len(population)):
+        dominatesRef.append([])
+        dominatedRef.append([])
+        for challenger in range(0, len(population)):
+            if dominates(population[cuts], population[challenger]):
+                dominatesRef[cuts].append(population[challenger])
+            elif dominates(population[challenger], population[cuts]):
+                dominatedRef[cuts].append(population[challenger])
+
+    for element in range(0, len(dominatedRef)):
+        if not dominatedRef[element]:
+            population[element]['DomLevel'] = 0
+        else:
+            pop.append(population[element])
+
+    while pop:
+
 
 
 #returns the number of subgraphs
@@ -352,7 +386,6 @@ def main():
                 cut = oldPopulation.pop()
                 combo['cut'] = cut
                 retvalList = checkFitness(fitFunction, data, cut, penalty)
-                print cut + ' ', retvalList
                 combo['fitness'] = retvalList[0]
                 combo['numerator'] = retvalList[1]
                 combo['denominator'] = retvalList[2]
@@ -395,6 +428,38 @@ def main():
     answer.write(str(globalBestCut) + '\n' + str(globalBest))
 
     print ('Done!')
+
+    population = []
+    combo = {}
+    combo['cut'] = 1
+    combo['fitness'] = 17
+    combo['numerator'] = 15
+    combo['denominator'] = 1
+    population.append(combo)
+
+    combo = {}
+    combo['cut'] = 2
+    combo['fitness'] = 16
+    combo['numerator'] = 1
+    combo['denominator'] = 15
+    population.append(combo)
+
+    combo = {}
+    combo['cut'] = 3
+    combo['fitness'] = 15
+    combo['numerator'] = 1
+    combo['denominator'] = 14
+    population.append(combo)
+
+    combo = {}
+    combo['cut'] = 4
+    combo['fitness'] = 14
+    combo['numerator'] = 5
+    combo['denominator'] = 5
+    population.append(combo)
+
+    getDomList(population)
+
 
 if __name__ == '__main__':
     main()
