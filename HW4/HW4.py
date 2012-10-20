@@ -20,7 +20,7 @@ def dominates(x, y):
 
 
 #appends the domination level to each cut in the population
-def getDomList(population):
+def findDomLevel(population):
     domList, pop, dominatesRef, dominatedRef = [], [], [], []
     row0, row = [], 1
     for cuts in range(0, len(population)):
@@ -146,6 +146,7 @@ def getParents(parentSelection, k, population, numParents):
         return retval
 
     elif(parentSelection == 'k-Tournament Selection without replacement'):
+        findDomLevel(population)
         while (len(retval) < numParents):
             tournament = []
             while (len(tournament) < k):
@@ -154,11 +155,12 @@ def getParents(parentSelection, k, population, numParents):
                 if(population[chalenger] not in tournament):
                     tournament.append(population[chalenger])
             #pick top one
-            ordered = sorted(tournament, key=itemgetter('fitness'), reverse=True)
+            ordered = sorted(tournament, key=itemgetter('DomLevel'), reverse=True)
             retval.append(ordered[0]['cut'])
         return retval
 
     elif(parentSelection == 'k-Tournament Selection with replacement'):
+        findDomLevel(population)
         while (len(retval) < numParents):
             tournament = []
             while (len(tournament) < k):
@@ -166,7 +168,7 @@ def getParents(parentSelection, k, population, numParents):
                 chalenger = random.randrange(0, len(population) - 1)
                 tournament.append(population[chalenger])
             #pick top one
-            ordered = sorted(tournament, key=itemgetter('fitness'), reverse=True)
+            ordered = sorted(tournament, key=itemgetter('DomLevel'), reverse=True)
             retval.append(ordered[0]['cut'])
         return retval
 
@@ -236,6 +238,7 @@ def selectSurvivors(survivalSelection, population, numSurvive, k):
         return retval
 
     elif(survivalSelection == 'k-Tournament Selection without replacement'):
+        findDomLevel(population)
         while (len(retval) < numSurvive):
             tournament = []
             while (len(tournament) < k):
@@ -244,11 +247,12 @@ def selectSurvivors(survivalSelection, population, numSurvive, k):
                 if(population[chalenger] not in tournament):
                     tournament.append(population[chalenger])
             #pick top one
-            ordered = sorted(tournament, key=itemgetter('fitness'), reverse=True)
+            ordered = sorted(tournament, key=itemgetter('DomLevel'), reverse=True)
             retval.append(ordered[0])
         return retval
 
     elif(survivalSelection == 'k-Tournament Selection with replacement'):
+        findDomLevel(population)
         while (len(retval) < numSurvive):
             tournament = []
             while (len(tournament) < k):
@@ -256,7 +260,7 @@ def selectSurvivors(survivalSelection, population, numSurvive, k):
                 chalenger = random.randrange(0, len(population) - 1)
                 tournament.append(population[chalenger])
             #pick top one
-            ordered = sorted(tournament, key=itemgetter('fitness'), reverse=True)
+            ordered = sorted(tournament, key=itemgetter('DomLevel'), reverse=True)
             retval.append(ordered[0])
         return retval
 
@@ -268,7 +272,7 @@ def selectSurvivors(survivalSelection, population, numSurvive, k):
         return retval
 
     elif(survivalSelection == 'truncation'):
-        ordered = sorted(population, key=itemgetter('fitness'), reverse=True)
+        ordered = sorted(population, key=itemgetter('DomLevel'), reverse=True)
         return ordered[:numSurvive]
 
 
@@ -345,6 +349,8 @@ def main():
     best = open(bestFile, 'w')
     globalBest = -100000.0
     globalBestCut = int
+    paretoFront = []
+
     for run in range(1, runs + 1):
     #reinitialise the population every run
         population = []
