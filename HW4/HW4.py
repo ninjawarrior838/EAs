@@ -22,9 +22,8 @@ def dominates(x, y):
 
 #appends the domination level to each cut in the population
 def getDomList(population):
-    #pdb.set_trace()
-    pop, dominatesRef, dominatedRef = [], [], []
-    row = 1
+    domList, pop, dominatesRef, dominatedRef = [], [], [], []
+    row0, row = [], 1
     for cuts in range(0, len(population)):
         dominatesRef.append([])
         dominatedRef.append([])
@@ -36,12 +35,27 @@ def getDomList(population):
 
     for element in range(0, len(dominatedRef)):
         if not dominatedRef[element]:
-            population[element]['DomLevel'] = 0
+            row0.append(population[element])
+            #population[element]['DomLevel'] = 0
         else:
             pop.append(population[element])
 
+    domList.append(row0)
+    #pdb.set_trace()
     while pop:
+        rowi = []
+        for element in range(0, len(pop) - 1):
+            addElement = True
+            for k in pop:
+                if dominates(k, pop[element]):
+                    addElement = False
+                if dominates(pop[element], k):
+                    pop.append(rowi.pop(k))
+            if addElement:
+                rowi.append(pop.pop(element))
+        domList.append(rowi)
 
+    return domList
 
 
 #returns the number of subgraphs
@@ -458,8 +472,8 @@ def main():
     combo['denominator'] = 5
     population.append(combo)
 
-    getDomList(population)
-
+    test = getDomList(population)
+    print test
 
 if __name__ == '__main__':
     main()
