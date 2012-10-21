@@ -272,6 +272,7 @@ def selectSurvivors(survivalSelection, population, numSurvive, k):
         return retval
 
     elif(survivalSelection == 'truncation'):
+        findDomLevel(population)
         ordered = sorted(population, key=itemgetter('DomLevel'), reverse=True)
         return ordered[:numSurvive]
 
@@ -415,6 +416,33 @@ def main():
 
             #Survival Selection
             population = selectSurvivors(survivalSelection, population, numSurvive, k)
+
+            newParetoFront, sum1, sum2 = [], float, float
+            findDomLevel(population)
+            ordered = sorted(population, key=itemgetter('DomLevel'))
+            for element in ordered:
+                if (element['DomLevel'] == 0):
+                    newParetoFront.append(element)
+
+            for element in newParetoFront:
+                sum1 = element['fitness']
+            average1 = (sum1 / float(len(newParetoFront)))
+
+            if paretoFront:
+                for element in paretoFront:
+                    sum2 = element['fitness']
+                average2 = (sum2 / float(len(paretoFront)))
+            else:
+                average2 = -100000
+
+            if average1 > average2:
+                paretoFront = newParetoFront
+                #put the pareto front in the answer file
+                answer = open(answerFile, 'w')
+                for element in paretoFront:
+                    answer.write(str(element['numerator']) + '\t' + str(element['denominator']) + '\t' + str(element['fitness']) + '\t' + str(element['cut']) + '\n')
+                answer.close()
+
             ordered = sorted(population, key=itemgetter('fitness'))
             localBest = ordered[-1]['fitness']
             localBestCut = ordered[-1]['cut']
@@ -443,9 +471,6 @@ def main():
     log.close()
     average.close()
     best.close()
-
-    answer = open(answerFile, 'w')
-    answer.write(str(globalBestCut) + '\n' + str(globalBest))
 
     print ('Done!')
 
