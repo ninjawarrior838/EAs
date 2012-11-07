@@ -290,8 +290,6 @@ def main():
     log.write("Result Log\n\n")
 
     answerFile = config.readline().strip()
-    dataFile = config.readline().strip()
-    log.write("Using data file: " + dataFile)
 
     averageFile = config.readline().strip()
     bestFile = config.readline().strip()
@@ -334,16 +332,6 @@ def main():
 
     #make a dictionary of edges
     data = {}
-    dFile = open(dataFile, 'r')
-    verticies = int(float(dFile.readline().strip()))
-    edges = int(float(dFile.readline().strip()))
-    for i in range(1, (verticies + 1)):
-        data[str(i)] = []
-    for lines in range(edges):
-        temp = dFile.readline().strip().split()
-        data[(temp[0])].append(temp[1])
-        data[(temp[1])].append(temp[0])
-    dFile.close()
 
     #Run the program the correct number of times, logging as it goes
     average = open(averageFile, 'w')
