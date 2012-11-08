@@ -1,6 +1,7 @@
 import sys
 import random
 import time
+import pdb
 from operator import itemgetter
 
 
@@ -17,6 +18,20 @@ def dominates(x, y):
         return True
     else:
         return False
+
+
+def generateGraph(size, chance):
+    data = {}
+
+    for i in range(0, (size)):
+        data[str(i)] = []
+    for node1 in range(0, size):
+        for node2 in range(1, size):
+            if((random.randrange(0, chance) == 0) and node1 != node2):
+                data[str(node1)].append(node2)
+                data[str(node2)].append(node1)
+
+    return data
 
 
 #appends the domination level to each cut in the population
@@ -195,6 +210,19 @@ def mutate(mutation, test):
     return ''.join([str(x) for x in digits])
 
 
+def mutateGraph(size, chance, data):
+    for node1 in range(0, size):
+        for node2 in range(1, size):
+            trigger = (random.randrange(0, chance) == 0)
+            if(trigger and node1 != node2 and (node2 not in data[node1])):
+                data[str(node1)].append(node2)
+                data[str(node2)].append(node1)
+            elif(trigger and node1 != node2 and (node2 in data[node1])):
+                data[str(node1)].remove(node2)
+                data[str(node2)].remove(node1)
+    return data
+
+
 #returns a recombined version of x and y according to the recombination variable
 def recombine(recombination, n, x, y):
     if(recombination == 'uniform crossover'):
@@ -221,6 +249,24 @@ def recombine(recombination, n, x, y):
     retval.append(''.join([str(x) for x in digits1]))
     retval.append(''.join([str(x) for x in digits2]))
     return retval
+
+
+def recombineGraph(size, chance, data1, data2):
+    for node1 in range(0, size):
+        for node2 in range(1, size):
+            trigger = (random.randrange(0, chance) == 0)
+            if(trigger and node1 != node2):
+                if((node2 in data1[node1]) and (node2 in data2[node1])):
+
+"""
+            and (node2 not in data[node1])):
+                data[str(node1)].append(node2)
+                data[str(node2)].append(node1)
+            elif(trigger == True and node1 != node2 and (node2 in data[node1])):
+                data[str(node1)].remove(node2)
+                data[str(node2)].remove(node1)
+"""
+    return
 
 
 def selectSurvivors(survivalSelection, population, numSurvive, k):
@@ -331,7 +377,7 @@ def main():
     stop = int(config.readline().strip())
 
     #make a dictionary of edges
-    data = {}
+    data = generateGraph(150, 10)
 
     #Run the program the correct number of times, logging as it goes
     average = open(averageFile, 'w')
