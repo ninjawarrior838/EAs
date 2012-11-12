@@ -22,15 +22,13 @@ def dominates(x, y):
 
 def generateGraph(size, chance):
     data = {}
-
-    for i in range(0, (size)):
+    for i in range(0, (size + 1)):
         data[str(i)] = []
     for node1 in range(0, size):
         for node2 in range(1, size):
             if((random.randrange(0, chance) == 0) and node1 != node2):
                 data[str(node1)].append(node2)
                 data[str(node2)].append(node1)
-
     return data
 
 
@@ -252,12 +250,17 @@ def recombine(recombination, n, x, y):
 
 
 def recombineGraph(size, chance, data1, data2):
+    retval = data1
     for node1 in range(0, size):
         for node2 in range(1, size):
             trigger = (random.randrange(0, chance) == 0)
             if(trigger and node1 != node2):
-                if((node2 in data1[node1]) and (node2 in data2[node1])):
-
+                if((node2 in data1[node1]) and (node2 not in data2[node1])):
+                    if(bool(random.getrandbits(1))):
+                        retval[str(node1)].remove(node2)
+                    else:
+                        retval[str(node1)].append(node1)
+    return retval
 """
             and (node2 not in data[node1])):
                 data[str(node1)].append(node2)
@@ -266,7 +269,6 @@ def recombineGraph(size, chance, data1, data2):
                 data[str(node1)].remove(node2)
                 data[str(node2)].remove(node1)
 """
-    return
 
 
 def selectSurvivors(survivalSelection, population, numSurvive, k):
@@ -336,7 +338,7 @@ def main():
     log.write("Result Log\n\n")
 
     answerFile = config.readline().strip()
-
+    dataFile = config.readline().strip()
     averageFile = config.readline().strip()
     bestFile = config.readline().strip()
     # check if a seed is provided, if 0, seed random from time in miliseconds
@@ -353,6 +355,8 @@ def main():
     #some initial parsing on the dat file
     runs = int(float(config.readline().strip()))
     evals = int(float(config.readline().strip()))
+
+    numNodes = int(float(config.readline().strip()))
     #populaion
     popSize = int(float(config.readline().strip()))
     #lambda
@@ -377,7 +381,20 @@ def main():
     stop = int(config.readline().strip())
 
     #make a dictionary of edges
-    data = generateGraph(150, 10)
+    data = {}
+    if(dataFile == 'none'):
+        data = generateGraph(numNodes, 10)
+    else:
+        dFile = open(dataFile, 'r')
+        verticies = int(float(dFile.readline().strip()))
+        edges = int(float(dFile.readline().strip()))
+        for i in range(1, (verticies + 1)):
+            data[str(i)] = []
+        for lines in range(edges):
+            temp = dFile.readline().strip().split()
+            data[(temp[0])].append(temp[1])
+            data[(temp[1])].append(temp[0])
+        dFile.close()
 
     #Run the program the correct number of times, logging as it goes
     average = open(averageFile, 'w')
@@ -391,7 +408,7 @@ def main():
         population = []
         for i in range(0, popSize):
             combo, retvalList = {}, []
-            cut = getInitial(initialisation, verticies)
+            cut = getInitial(initialisation, numNodes)
             combo['cut'] = cut
             retvalList = checkFitness(fitFunction, data, cut, penalty)
             combo['fitness'] = retvalList[0]
