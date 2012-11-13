@@ -359,6 +359,10 @@ def main():
     numNodes = int(float(config.readline().strip()))
     #populaion
     popSize = int(float(config.readline().strip()))
+    #partition sample size
+    partitionSampleSize = int(float(config.readline().strip()))
+    #graph sample size
+    graphSampleSize = int(float(config.readline().strip()))
     #lambda
     numParents = int(float(config.readline().strip()))
     #mew
@@ -377,13 +381,14 @@ def main():
     survivalStrategy = config.readline().strip()
     survivalSelection = config.readline().strip()
     numSurvive = popSize
-    #stop is the how many runs to stop after if there is no change in the best cut
-    stop = int(config.readline().strip())
 
-    #make a dictionary of edges
-    data = {}
+    #make initial population of graphs
+    data, graphs = {}, []
     if(dataFile == 'none'):
-        data = generateGraph(numNodes, 10)
+        for i in range(0, popSize):
+            data = generateGraph(numNodes, 10)
+            data['timesUsed'] = 0
+            graphs.append(data)
     else:
         dFile = open(dataFile, 'r')
         verticies = int(float(dFile.readline().strip()))
@@ -401,31 +406,32 @@ def main():
     best = open(bestFile, 'w')
     globalBest = -100000.0
     globalBestCut = int
-    paretoFront = []
+    population = []
+
+    #initialize cuts
+    for i in range(0, popSize):
+        combo, retvalList = {}, []
+        cut = getInitial(initialisation, numNodes)
+        combo['cut'] = cut
+        #retvalList = checkFitness(fitFunction, data, cut, penalty)
+        combo['fitness'] = 0.0
+        combo['timesUsed'] = 0
+        #combo['numerator'] = retvalList[1]
+        #combo['denominator'] = retvalList[2]
+        population.append(combo)
+
+    #initialize fitness for both graphs and cuts
+    #for cut in population:
+        #for i in range(0, graphSampleSize):
+
+    #for graph in graphs:
+        #for i in range(0, partitionSampleSize):
 
     for run in range(1, runs + 1):
-    #reinitialise the population every run
-        population = []
-        for i in range(0, popSize):
-            combo, retvalList = {}, []
-            cut = getInitial(initialisation, numNodes)
-            combo['cut'] = cut
-            retvalList = checkFitness(fitFunction, data, cut, penalty)
-            combo['fitness'] = retvalList[0]
-            combo['numerator'] = retvalList[1]
-            combo['denominator'] = retvalList[2]
-            population.append(combo)
-
-        #create the initial population according to the initialisation
         log.write('\n\nRun: ' + str(run))
         t = getTime()
 
-        history, done = [], False
         for checks in range(evals):
-            #termination conditon
-            if (done):
-                print 'early termination'
-                break
             #parent selection
             parents, children = [], []
             parents = getParents(parentSelection, k, population, numParents)
@@ -468,31 +474,11 @@ def main():
             #Survival Selection
             population = selectSurvivors(survivalSelection, population, numSurvive, k)
 
-            newParetoFront, sum1, sum2 = [], float, float
-            findDomLevel(population)
-            ordered = sorted(population, key=itemgetter('DomLevel'))
-            for element in ordered:
-                if (element['DomLevel'] == 0):
-                    newParetoFront.append(element)
-
-            for element in newParetoFront:
-                sum1 = element['fitness']
-            average1 = (sum1 / float(len(newParetoFront)))
-
-            if paretoFront:
-                for element in paretoFront:
-                    sum2 = element['fitness']
-                average2 = (sum2 / float(len(paretoFront)))
-            else:
-                average2 = -100000
-
-            if average1 > average2:
-                paretoFront = newParetoFront
-                #put the pareto front in the answer file
-                answer = open(answerFile, 'w')
-                for element in paretoFront:
-                    answer.write(str(element['numerator']) + '\t' + str(element['denominator']) + '\t' + str(element['fitness']) + '\t' + str(element['cut']) + '\n')
-                answer.close()
+            #put the pareto front in the answer file
+            answer = open(answerFile, 'w')
+            for element in paretoFront:
+                answer.write(str(element['numerator']) + '\t' + str(element['denominator']) + '\t' + str(element['fitness']) + '\t' + str(element['cut']) + '\n')
+            answer.close()
 
             ordered = sorted(population, key=itemgetter('fitness'))
             localBest = ordered[-1]['fitness']
@@ -501,14 +487,6 @@ def main():
             average.write(str(sumAverage / (numChlidren + numParents)) + '\n')
             best.write(str(localBest) + '\n')
 
-            #Early termination if no change in n runs
-            history.append(localBest)
-            if (len(history) > stop):
-                history.pop(0)
-                compare = history[:]
-                compare.sort()
-                if (compare[-1] == compare[0]):
-                    done = True
             if (localBest > globalBest):
                 globalBest = localBest
                 globalBestCut = localBestCut
