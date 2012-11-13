@@ -387,6 +387,7 @@ def main():
     if(dataFile == 'none'):
         for i in range(0, popSize):
             data = generateGraph(numNodes, 10)
+            data['fitness'] = 0.0
             data['timesUsed'] = 0
             graphs.append(data)
     else:
@@ -423,9 +424,11 @@ def main():
     #initialize fitness for both graphs and cuts
     #for cut in population:
         #for i in range(0, graphSampleSize):
+            #while(cut['timesUsed'] < 10 and graphs['timesUsed']):
 
     #for graph in graphs:
         #for i in range(0, partitionSampleSize):
+            #while(cut['timesUsed'] < 10 and graphs['timesUsed']):
 
     for run in range(1, runs + 1):
         log.write('\n\nRun: ' + str(run))
@@ -463,10 +466,10 @@ def main():
                 combo, retvalList = {}, []
                 cut = oldPopulation.pop()
                 combo['cut'] = cut
-                retvalList = checkFitness(fitFunction, data, cut, penalty)
+                #retvalList = checkFitness(fitFunction, data, cut, penalty)
                 combo['fitness'] = retvalList[0]
-                combo['numerator'] = retvalList[1]
-                combo['denominator'] = retvalList[2]
+                #combo['numerator'] = retvalList[1]
+                #combo['denominator'] = retvalList[2]
                 population.append(combo)
             for cuts in population:
                 sumAverage = sumAverage + cuts['fitness']
@@ -474,10 +477,8 @@ def main():
             #Survival Selection
             population = selectSurvivors(survivalSelection, population, numSurvive, k)
 
-            #put the pareto front in the answer file
+            #put the answer in the answer file
             answer = open(answerFile, 'w')
-            for element in paretoFront:
-                answer.write(str(element['numerator']) + '\t' + str(element['denominator']) + '\t' + str(element['fitness']) + '\t' + str(element['cut']) + '\n')
             answer.close()
 
             ordered = sorted(population, key=itemgetter('fitness'))
