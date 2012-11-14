@@ -1,6 +1,7 @@
 import sys
 import random
 import time
+import copy
 import pdb
 from operator import itemgetter
 
@@ -182,7 +183,7 @@ def getParents(parentSelection, k, population, numParents):
 #returns a mutated version of the binary intager test input
 def mutate(mutation, test):
     if (mutation == 'bit flip'):
-        retval = list(str(test))
+        retval = copy.deepcopy(list(str(test)))
         for bit in range(0, len(retval)):
             flip = random.getrandbits(1)
             if flip and retval[bit] == '0':
@@ -196,23 +197,24 @@ def mutate(mutation, test):
 
 
 def mutateGraph(size, chance, data):
+    retval = copy.deepcopy(data)
     for node1 in range(0, size):
         for node2 in range(1, size):
             trigger = (random.randrange(0, chance) == 0)
             if(trigger and node1 != node2 and (node2 not in data[str(node1)])):
-                data[str(node1)].append(node2)
-                data[str(node2)].append(node1)
-            elif(trigger and node1 != node2 and (node2 in data[str(node1)] and node1 in data[str(node2)])):
-                data[str(node1)].remove(node2)
-                data[str(node2)].remove(node1)
-    return data
+                retval[str(node1)].append(node2)
+                retval[str(node2)].append(node1)
+            elif(trigger and node1 != node2 and (node2 in retval[str(node1)] and node1 in retval[str(node2)])):
+                retval[str(node1)].remove(node2)
+                retval[str(node2)].remove(node1)
+    return retval
 
 
 #returns a recombined version of x and y according to the recombination variable
 def recombine(recombination, n, x, y):
     if(recombination == 'uniform crossover'):
-        val1 = list(str(x))
-        val2 = list(str(y))
+        val1 = copy.deepcopy(list(str(x)))
+        val2 = copy.deepcopy(list(str(y)))
         retval = []
         for bit in range(0, len(val1)):
             if bool(random.getrandbits(1)):
@@ -221,8 +223,8 @@ def recombine(recombination, n, x, y):
             digits2 = [int(x) for x in val2]
 
     elif (recombination == 'n-point crossover'):
-        val1 = list(str(x))
-        val2 = list(str(y))
+        val1 = copy.deepcopy(list(str(x)))
+        val2 = copy.deepcopy(list(str(y)))
         retval = []
         index = random.randrange(0, len(val1) - n)
         for bit in range(0, n):
@@ -237,7 +239,7 @@ def recombine(recombination, n, x, y):
 
 
 def recombineGraph(size, chance, data1, data2):
-    retval = data1
+    retval = copy.deepcopy(data1)
     for node1 in range(0, size):
         for node2 in range(1, size):
             trigger = (random.randrange(0, chance) == 0)
@@ -458,7 +460,7 @@ def main():
             mutantChildren = graphChildren[:]
             while (len(graphChildren) < numChlidren):
                 mutantChild = mutantChildren.pop()
-                mutantChild = mutateGraph(numNodes, 10, mutantChild)
+                mutantChild = mutateGraph(numNodes, 20, mutantChild)
                 graphChildren.append(mutantChild)
 
             if(survivalStrategy == 'plus'):
@@ -471,25 +473,35 @@ def main():
                 print 'Error: no survival strategy selected'
 
             #clear all the old fiitnesses before assigning new ones
-            for i in range(0, popSize):
+            for i in range(0, len(population)):
                 population[i]['fitness'] = 0.0
                 graphs[i]['fitness'] = 0.0
+                #print str(population[i]['timesUsed']) + "\t" + str(graphs[i]['timesUsed']) + '\t' + str(i)
 
+            #pdb.set_trace()
             #evaluate new fitnesses
             for cut in population:
                 for i in range(0, graphSampleSize):
-                    if(cut['timesUsed'] < 10):
+                    if(cut['timesUsed'] < graphSampleSize):
                         testCut = cut
-                        testGraphIndex = random.randrange(0, popSize)
-                        while(graphs[testGraphIndex]['timesUsed'] >= 10):
-                            testGraphIndex = random.randrange(0, popSize)
+                        testGraphIndex = random.randrange(0, len(graphs))
+                        while(graphs[testGraphIndex]['timesUsed'] >= graphSampleSize):
+                            testGraphIndex = random.randrange(0, len(graphs))
                         retvalList = checkFitness(fitFunction, graphs[testGraphIndex], testCut['cut'], penalty)
                         cut['fitness'] = cut['fitness'] + retvalList[0]
                         cut['timesUsed'] = cut['timesUsed'] + 1
                         graphs[testGraphIndex]['fitness'] = graphs[testGraphIndex]['fitness'] + (1 / retvalList[0])
                         graphs[testGraphIndex]['timesUsed'] = graphs[testGraphIndex]['timesUsed'] + 1
                         checks = checks + 1
+                    else:
+                        print "error"
+                        break
+                for i in range(0, len(graphs)):
+                    print str(population[i]['timesUsed']) + "\t" + str(graphs[i]['timesUsed']) + '\t' + str(i)
+                print 'done'
+                pdb.set_trace()
 
+            pdb.set_trace()
             #find the average fitness by dividing by the number of times used and reset times used
             for i in range(0, popSize):
                 population[i]['fitness'] = population[i]['fitness'] / population[i]['timesUsed']
@@ -497,7 +509,6 @@ def main():
                 graphs[i]['fitness'] = graphs[i]['fitness'] / graphs[i]['timesUsed']
                 graphs[i]['timesUsed'] = 0
 
-            pdb.set_trace()
             #Survival Selection
             population = selectSurvivors(survivalSelection, population, numSurvive, k)
 
