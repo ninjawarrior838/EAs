@@ -159,7 +159,7 @@ def getParents(parentSelection, k, population, numParents):
         return retval
 
     elif(parentSelection == 'k-Tournament Selection without replacement'):
-        findDomLevel(population)
+        #findDomLevel(population)
         while (len(retval) < numParents):
             tournament = []
             while (len(tournament) < k):
@@ -173,7 +173,7 @@ def getParents(parentSelection, k, population, numParents):
         return retval
 
     elif(parentSelection == 'k-Tournament Selection with replacement'):
-        findDomLevel(population)
+        #findDomLevel(population)
         while (len(retval) < numParents):
             tournament = []
             while (len(tournament) < k):
@@ -286,7 +286,7 @@ def selectSurvivors(survivalSelection, population, numSurvive, k):
         return retval
 
     elif(survivalSelection == 'k-Tournament Selection without replacement'):
-        findDomLevel(population)
+        #findDomLevel(population)
         while (len(retval) < numSurvive):
             tournament = []
             while (len(tournament) < k):
@@ -300,7 +300,7 @@ def selectSurvivors(survivalSelection, population, numSurvive, k):
         return retval
 
     elif(survivalSelection == 'k-Tournament Selection with replacement'):
-        findDomLevel(population)
+        #findDomLevel(population)
         while (len(retval) < numSurvive):
             tournament = []
             while (len(tournament) < k):
@@ -320,7 +320,7 @@ def selectSurvivors(survivalSelection, population, numSurvive, k):
         return retval
 
     elif(survivalSelection == 'truncation'):
-        findDomLevel(population)
+        #findDomLevel(population)
         ordered = sorted(population, key=itemgetter('DomLevel'), reverse=True)
         return ordered[:numSurvive]
 
@@ -359,8 +359,6 @@ def main():
     numNodes = int(float(config.readline().strip()))
     #populaion
     popSize = int(float(config.readline().strip()))
-    #partition sample size
-    partitionSampleSize = int(float(config.readline().strip()))
     #graph sample size
     graphSampleSize = int(float(config.readline().strip()))
     #lambda
@@ -371,7 +369,6 @@ def main():
     #parsing for different algorithm arguements
     fitFunction = config.readline().strip()
     penalty = float(config.readline().strip())
-    representation = config.readline().strip()
     initialisation = config.readline().strip()
     parentSelection = config.readline().strip()
     k = int(config.readline().strip())
@@ -382,26 +379,6 @@ def main():
     survivalSelection = config.readline().strip()
     numSurvive = popSize
 
-    #make initial population of graphs
-    data, graphs = {}, []
-    if(dataFile == 'none'):
-        for i in range(0, popSize):
-            data = generateGraph(numNodes, 10)
-            data['fitness'] = 0.0
-            data['timesUsed'] = 0
-            graphs.append(data)
-    else:
-        dFile = open(dataFile, 'r')
-        verticies = int(float(dFile.readline().strip()))
-        edges = int(float(dFile.readline().strip()))
-        for i in range(1, (verticies + 1)):
-            data[str(i)] = []
-        for lines in range(edges):
-            temp = dFile.readline().strip().split()
-            data[(temp[0])].append(temp[1])
-            data[(temp[1])].append(temp[0])
-        dFile.close()
-
     #Run the program the correct number of times, logging as it goes
     average = open(averageFile, 'w')
     best = open(bestFile, 'w')
@@ -409,31 +386,65 @@ def main():
     globalBestCut = int
     population = []
 
-    #initialize cuts
-    for i in range(0, popSize):
-        combo, retvalList = {}, []
-        cut = getInitial(initialisation, numNodes)
-        combo['cut'] = cut
-        #retvalList = checkFitness(fitFunction, data, cut, penalty)
-        combo['fitness'] = 0.0
-        combo['timesUsed'] = 0
-        #combo['numerator'] = retvalList[1]
-        #combo['denominator'] = retvalList[2]
-        population.append(combo)
-
-    #initialize fitness for both graphs and cuts
-    #for cut in population:
-        #for i in range(0, graphSampleSize):
-            #while(cut['timesUsed'] < 10 and graphs['timesUsed']):
-
-    #for graph in graphs:
-        #for i in range(0, partitionSampleSize):
-            #while(cut['timesUsed'] < 10 and graphs['timesUsed']):
-
     for run in range(1, runs + 1):
         log.write('\n\nRun: ' + str(run))
         t = getTime()
 
+        #reinitialize both cuts and graphs every run
+        #initialize graphs first
+        data, graphs = {}, []
+        if(dataFile == 'none'):
+            for i in range(0, popSize):
+                data = generateGraph(numNodes, 10)
+                data['fitness'] = 0.0
+                data['timesUsed'] = 0
+                graphs.append(data)
+        else:
+            dFile = open(dataFile, 'r')
+            verticies = int(float(dFile.readline().strip()))
+            edges = int(float(dFile.readline().strip()))
+            for i in range(1, (verticies + 1)):
+                data[str(i)] = []
+            for lines in range(edges):
+                temp = dFile.readline().strip().split()
+                data[(temp[0])].append(temp[1])
+                data[(temp[1])].append(temp[0])
+            dFile.close()
+
+        #initialize cuts
+        for i in range(0, popSize):
+            combo, retvalList = {}, []
+            cut = getInitial(initialisation, numNodes)
+            combo['cut'] = cut
+            #retvalList = checkFitness(fitFunction, data, cut, penalty)
+            combo['fitness'] = 0.0
+            combo['timesUsed'] = 0
+            #combo['numerator'] = retvalList[1]
+            #combo['denominator'] = retvalList[2]
+            population.append(combo)
+
+        #initialize fitness for both graphs and cuts
+        for cut in population:
+            for i in range(0, graphSampleSize):
+                if(cut['timesUsed'] < 10):
+                    testCut = cut
+                    testGraphIndex = random.randrange(0, popSize)
+                    while(graphs[testGraphIndex]['timesUsed'] >= 10):
+                        testGraphIndex = random.randrange(0, popSize)
+                    retvalList = checkFitness(fitFunction, graphs[testGraphIndex], testCut['cut'], penalty)
+                    cut['fitness'] = cut['fitness'] + retvalList[0]
+                    cut['timesUsed'] = cut['timesUsed'] + 1
+                    graphs[testGraphIndex]['fitness'] = graphs[testGraphIndex]['fitness'] + (1 / retvalList[0])
+                    graphs[testGraphIndex]['timesUsed'] = graphs[testGraphIndex]['timesUsed'] + 1
+
+        #find the average fitness by dividing by the number of times used and reset times used
+        for i in range(0, popSize):
+            population[i]['fitness'] = population[i]['fitness'] / population[i]['timesUsed']
+            population[i]['timesUsed'] = 0
+            graphs[i]['fitness'] = graphs[i]['fitness'] / graphs[i]['timesUsed']
+            graphs[i]['timesUsed'] = 0
+
+        pdb.set_trace()
         for checks in range(evals):
             #parent selection
             parents, children = [], []
