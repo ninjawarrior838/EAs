@@ -146,20 +146,7 @@ def getInitial(initialisation, verticies):
 #choses the parents according to the config file, returns a list of cuts
 def getParents(parentSelection, k, population, numParents):
     retval = []
-    if(parentSelection == 'fitness proportional'):
-        fitnessProportion = 0
-        survive = []
-        for cuts in population:
-            fitnessProportion = fitnessProportion + cuts['fitness']
-        for cuts in population:
-            survive.append((cuts['cut'], cuts['fitness'] / fitnessProportion))
-        parents = sorted(survive, key=itemgetter(1))[:numParents]
-        for i in parents:
-            retval.append(i[0])
-        return retval
-
-    elif(parentSelection == 'k-Tournament Selection without replacement'):
-        #findDomLevel(population)
+    if(parentSelection == 'k-Tournament Selection without replacement'):
         while (len(retval) < numParents):
             tournament = []
             while (len(tournament) < k):
@@ -168,12 +155,11 @@ def getParents(parentSelection, k, population, numParents):
                 if(population[chalenger] not in tournament):
                     tournament.append(population[chalenger])
             #pick top one
-            ordered = sorted(tournament, key=itemgetter('DomLevel'), reverse=True)
-            retval.append(ordered[0]['cut'])
+            ordered = sorted(tournament, key=itemgetter('fitness'), reverse=True)
+            retval.append(ordered[0])
         return retval
 
     elif(parentSelection == 'k-Tournament Selection with replacement'):
-        #findDomLevel(population)
         while (len(retval) < numParents):
             tournament = []
             while (len(tournament) < k):
@@ -181,15 +167,15 @@ def getParents(parentSelection, k, population, numParents):
                 chalenger = random.randrange(0, len(population) - 1)
                 tournament.append(population[chalenger])
             #pick top one
-            ordered = sorted(tournament, key=itemgetter('DomLevel'), reverse=True)
-            retval.append(ordered[0]['cut'])
+            ordered = sorted(tournament, key=itemgetter('fitness'), reverse=True)
+            retval.append(ordered[0])
         return retval
 
     elif(parentSelection == 'uniform random'):
         while (len(retval) < numParents):
             chalenger = random.randrange(0, len(population) - 1)
             if(population[chalenger] not in retval):
-                retval.append(population[chalenger]['cut'])
+                retval.append(population[chalenger])
         return retval
 
 #returns a mutated version of the binary intager test input
@@ -255,7 +241,7 @@ def recombineGraph(size, chance, data1, data2):
         for node2 in range(1, size):
             trigger = (random.randrange(0, chance) == 0)
             if(trigger and node1 != node2):
-                if((node2 in data1[node1]) and (node2 not in data2[node1])):
+                if((node2 in data1[str(node1)]) and (node2 not in data2[str(node1)])):
                     if(bool(random.getrandbits(1))):
                         retval[str(node1)].remove(node2)
                     else:
@@ -384,15 +370,15 @@ def main():
     best = open(bestFile, 'w')
     globalBest = -100000.0
     globalBestCut = int
-    population = []
 
     for run in range(1, runs + 1):
         log.write('\n\nRun: ' + str(run))
         t = getTime()
+        graphs, population = [], []
 
         #reinitialize both cuts and graphs every run
         #initialize graphs first
-        data, graphs = {}, []
+        data = {}
         if(dataFile == 'none'):
             for i in range(0, popSize):
                 data = generateGraph(numNodes, 10)
@@ -416,11 +402,8 @@ def main():
             combo, retvalList = {}, []
             cut = getInitial(initialisation, numNodes)
             combo['cut'] = cut
-            #retvalList = checkFitness(fitFunction, data, cut, penalty)
             combo['fitness'] = 0.0
             combo['timesUsed'] = 0
-            #combo['numerator'] = retvalList[1]
-            #combo['denominator'] = retvalList[2]
             population.append(combo)
 
         #initialize fitness for both graphs and cuts
@@ -444,19 +427,34 @@ def main():
             graphs[i]['fitness'] = graphs[i]['fitness'] / graphs[i]['timesUsed']
             graphs[i]['timesUsed'] = 0
 
-        pdb.set_trace()
-        for checks in range(evals):
+        checks = 0
+        while checks < evals:
             #parent selection
-            parents, children = [], []
-            parents = getParents(parentSelection, k, population, numParents)
+            cutParents, cutChildren, graphParents, graphChildren = [], [], [], []
+            cutParents = getParents(parentSelection, k, population, numParents)
+            graphParents = getParents(parentSelection, k, graphs, numParents)
 
-            #recombination
-            while (len(children) < (numChlidren / 2)):
-                mom = random.randrange(0, len(parents) - 1)
-                dad = random.randrange(0, len(parents) - 1)
+            #recombination for cuts
+            while (len(cutChildren) < (numChlidren / 2)):
+                mom = random.randrange(0, len(cutParents) - 1)
+                dad = random.randrange(0, len(cutParents) - 1)
                 if (mom != dad):
-                    children = children + recombine(recombination, n, parents[mom], parents[dad])
+                    combo = {}
+                    cuts = recombine(recombination, n, cutParents[mom]['cut'], cutParents[dad]['cut'])
+                    combo['cut'] = cuts[0]
+                    combo['fitness'] = 0.0
+                    combo['timesUsed'] = 0
+                    cutChildren.append(combo)
+                    combo['cut'] = cuts[1]
+                    cutChildren.append(combo)
+            #recombination for graphs
+            while (len(graphChildren) < (numChlidren / 2)):
+                mom = random.randrange(0, len(graphParents) - 1)
+                dad = random.randrange(0, len(graphParents) - 1)
+                if (mom != dad):
+                    graphChildren.append(recombineGraph(numNodes, 10, graphParents[mom], graphParents[dad]))
 
+            pdb.set_trace()
             #mutation
             mutantChildren = children[:]
             while (len(children) < numChlidren):
