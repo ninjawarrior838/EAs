@@ -22,11 +22,11 @@ def dominates(x, y):
 
 def generateGraph(size, chance):
     data = {}
-    for i in range(0, (size + 1)):
+    for i in range(0, (size)):
         data[str(i)] = []
     for node1 in range(0, size):
         for node2 in range(1, size):
-            if((random.randrange(0, chance) == 0) and node1 != node2):
+            if((random.randrange(0, chance) == 0) and node1 != node2 and node2 not in data[str(node1)] and node1 not in data[str(node2)]):
                 data[str(node1)].append(node2)
                 data[str(node2)].append(node1)
     return data
@@ -93,7 +93,7 @@ def checkFitness(fitFunction, data, test, penalty):
     numCuts, retvalList = 0, []
 
     #find the lowest number of cuts
-    for num in range(1, len(test) + 1):
+    for num in range(0, len(test)):
         for pos in range(len(data[str(num)])):
             if test[num - 1] != test[int(data[str(num)][pos]) - 1]:
                 numCuts += 1
@@ -112,10 +112,11 @@ def checkFitness(fitFunction, data, test, penalty):
     retvalList.append(partition)
     if numCuts == 0:
         retvalList[1] = 100000
+        retvalList[0] = -100000
 
     if(fitFunction == 'subgraphs'):
         test1, test2, subgraphs, numCuts = [], [], 0, 0
-        for i in range(1, len(test) + 1):
+        for i in range(1, len(test)):
             if(test[i - 1] == '1'):
                 test1.append(i)
             else:
@@ -198,10 +199,10 @@ def mutateGraph(size, chance, data):
     for node1 in range(0, size):
         for node2 in range(1, size):
             trigger = (random.randrange(0, chance) == 0)
-            if(trigger and node1 != node2 and (node2 not in data[node1])):
+            if(trigger and node1 != node2 and (node2 not in data[str(node1)])):
                 data[str(node1)].append(node2)
                 data[str(node2)].append(node1)
-            elif(trigger and node1 != node2 and (node2 in data[node1])):
+            elif(trigger and node1 != node2 and (node2 in data[str(node1)] and node1 in data[str(node2)])):
                 data[str(node1)].remove(node2)
                 data[str(node2)].remove(node1)
     return data
@@ -247,14 +248,6 @@ def recombineGraph(size, chance, data1, data2):
                     else:
                         retval[str(node1)].append(node1)
     return retval
-"""
-            and (node2 not in data[node1])):
-                data[str(node1)].append(node2)
-                data[str(node2)].append(node1)
-            elif(trigger == True and node1 != node2 and (node2 in data[node1])):
-                data[str(node1)].remove(node2)
-                data[str(node2)].remove(node1)
-"""
 
 
 def selectSurvivors(survivalSelection, population, numSurvive, k):
@@ -454,35 +447,57 @@ def main():
                 if (mom != dad):
                     graphChildren.append(recombineGraph(numNodes, 10, graphParents[mom], graphParents[dad]))
 
-            pdb.set_trace()
             #mutation
-            mutantChildren = children[:]
-            while (len(children) < numChlidren):
+            mutantChildren = cutChildren[:]
+            while (len(cutChildren) < numChlidren):
                 mutantChild = mutantChildren.pop()
-                mutantChild = mutate(mutation, mutantChild)
-                children.append(mutantChild)
+                mutantChildCut = mutate(mutation, mutantChild['cut'])
+                mutantChild['cut'] = mutantChildCut
+                cutChildren.append(mutantChild)
+
+            mutantChildren = graphChildren[:]
+            while (len(graphChildren) < numChlidren):
+                mutantChild = mutantChildren.pop()
+                mutantChild = mutateGraph(numNodes, 10, mutantChild)
+                graphChildren.append(mutantChild)
 
             if(survivalStrategy == 'plus'):
-                oldPopulation = parents + children
+                population = cutParents + cutChildren
+                graphs = graphParents + graphChildren
             elif(survivalStrategy == 'comma'):
-                oldPopulation = children
+                population = cutChildren
+                graphs = graphChildren
             else:
                 print 'Error: no survival strategy selected'
 
-            #evaluate new fitnesses
-            population, sumAverage = [], 0
-            while (len(oldPopulation) > 0):
-                combo, retvalList = {}, []
-                cut = oldPopulation.pop()
-                combo['cut'] = cut
-                #retvalList = checkFitness(fitFunction, data, cut, penalty)
-                combo['fitness'] = retvalList[0]
-                #combo['numerator'] = retvalList[1]
-                #combo['denominator'] = retvalList[2]
-                population.append(combo)
-            for cuts in population:
-                sumAverage = sumAverage + cuts['fitness']
+            #clear all the old fiitnesses before assigning new ones
+            for i in range(0, popSize):
+                population[i]['fitness'] = 0.0
+                graphs[i]['fitness'] = 0.0
 
+            #evaluate new fitnesses
+            for cut in population:
+                for i in range(0, graphSampleSize):
+                    if(cut['timesUsed'] < 10):
+                        testCut = cut
+                        testGraphIndex = random.randrange(0, popSize)
+                        while(graphs[testGraphIndex]['timesUsed'] >= 10):
+                            testGraphIndex = random.randrange(0, popSize)
+                        retvalList = checkFitness(fitFunction, graphs[testGraphIndex], testCut['cut'], penalty)
+                        cut['fitness'] = cut['fitness'] + retvalList[0]
+                        cut['timesUsed'] = cut['timesUsed'] + 1
+                        graphs[testGraphIndex]['fitness'] = graphs[testGraphIndex]['fitness'] + (1 / retvalList[0])
+                        graphs[testGraphIndex]['timesUsed'] = graphs[testGraphIndex]['timesUsed'] + 1
+                        checks = checks + 1
+
+            #find the average fitness by dividing by the number of times used and reset times used
+            for i in range(0, popSize):
+                population[i]['fitness'] = population[i]['fitness'] / population[i]['timesUsed']
+                population[i]['timesUsed'] = 0
+                graphs[i]['fitness'] = graphs[i]['fitness'] / graphs[i]['timesUsed']
+                graphs[i]['timesUsed'] = 0
+
+            pdb.set_trace()
             #Survival Selection
             population = selectSurvivors(survivalSelection, population, numSurvive, k)
 
