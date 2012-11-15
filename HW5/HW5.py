@@ -125,8 +125,12 @@ def checkFitness(fitFunction, data, test, penalty):
         subgraphs = isConnected(test1, data)
         subgraphs = subgraphs + isConnected(test2, data)
     else:
+        if retvalList[0] == 0:
+            retvalList[0] = -100000
         return retvalList
     retvalList[0] = (retvalList[0] - ((subgraphs - 2) * (penalty)))
+    if retvalList[0] == 0:
+        retvalList[0] = -100000
     return retvalList
 
 #returns the time in miliseconds
@@ -362,8 +366,8 @@ def main():
     #Run the program the correct number of times, logging as it goes
     average = open(averageFile, 'w')
     best = open(bestFile, 'w')
-    globalBest = -100000.0
-    globalBestCut = int
+    globalBest, globalBestGraphFitness = -100000.0, -100000.0
+    globalBestCut, globalBestGraph = int, int
 
     for run in range(1, runs + 1):
         log.write('\n\nRun: ' + str(run))
@@ -495,8 +499,8 @@ def main():
                 #print '****************'
                 #pdb.set_trace()
 
-            print checks
             #find the average fitness by dividing by the number of times used and reset times used
+            localAverageFitness, localAverageGraphFitness = 0, 0
             for i in range(0, len(population)):
                 if(population[i]['timesUsed'] != 0):
                     population[i]['fitness'] = population[i]['fitness'] / population[i]['timesUsed']
@@ -510,26 +514,35 @@ def main():
                 else:
                     graphs[i]['fitness'] = -100000
                     graphs[i]['timesUsed'] = 0
+                localAverageFitness = localAverageFitness + population[i]['fitness']
+                localAverageGraphFitness = localAverageGraphFitness + graphs[i]['fitness']
 
             #pdb.set_trace()
             #Survival Selection
             population = selectSurvivors(survivalSelection, population, numSurvive, k)
             graphs = selectSurvivors(survivalSelection, graphs, numSurvive, k)
 
+            ordered = sorted(population, key=itemgetter('fitness'))
+            ordered2 = sorted(graphs, key=itemgetter('fitness'))
+            localBestFitness = ordered[-1]['fitness']
+            localBestCut = ordered[-1]['cut']
+            localBestGraphFitness = ordered2[-1]['fitness']
+            localBestGraph = ordered2[-1]
+            log.write('\n' + str(checks) + '\t' + str(localAverageFitness) + '\t' + str(localBestFitness) + '\t' + str(localAverageGraphFitness) + '\t' + str(localBestGraphFitness))
+            #average.write(str(numParents))
+            #best.write(str(localBestCut) + '\n')
+
+            if (localBestFitness > globalBest):
+                globalBest = localBestFitness
+                globalBestCut = localBestCut
+            if (localBestGraphFitness > globalBestGraphFitness):
+                globalBestGraphFitness = localBestGraphFitness
+                globalBestGraph = localBestGraph
+
             #put the answer in the answer file
             answer = open(answerFile, 'w')
+            answer.write(str(globalBestCut) + '\n' + str(globalBest) + '\n' + str(globalBestGraph) + '\n' + str(globalBestGraphFitness))
             answer.close()
-
-            ordered = sorted(population, key=itemgetter('fitness'))
-            localBest = ordered[-1]['fitness']
-            localBestCut = ordered[-1]['cut']
-            log.write('\n' + str(checks) + '\t' + str(localBest))
-            average.write(str(numParents))
-            best.write(str(localBest) + '\n')
-
-            if (localBest > globalBest):
-                globalBest = localBest
-                globalBestCut = localBestCut
 
         average.write('\n\n')
         best.write('\n\n')
