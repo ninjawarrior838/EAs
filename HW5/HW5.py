@@ -284,7 +284,6 @@ def selectSurvivors(survivalSelection, population, numSurvive, k):
         return retval
 
     elif(survivalSelection == 'k-Tournament Selection with replacement'):
-        #findDomLevel(population)
         while (len(retval) < numSurvive):
             tournament = []
             while (len(tournament) < k):
@@ -304,7 +303,6 @@ def selectSurvivors(survivalSelection, population, numSurvive, k):
         return retval
 
     elif(survivalSelection == 'truncation'):
-        #findDomLevel(population)
         ordered = sorted(population, key=itemgetter('DomLevel'), reverse=True)
         return ordered[:numSurvive]
 
@@ -379,7 +377,7 @@ def main():
         data = {}
         if(dataFile == 'none'):
             for i in range(0, popSize):
-                data = generateGraph(numNodes, 10)
+                data = generateGraph(numNodes, 50)
                 data['fitness'] = 0.0
                 data['timesUsed'] = 0
                 graphs.append(data)
@@ -407,10 +405,10 @@ def main():
         #initialize fitness for both graphs and cuts
         for cut in population:
             for i in range(0, graphSampleSize):
-                if(cut['timesUsed'] < 10):
+                if(cut['timesUsed'] < graphSampleSize):
                     testCut = cut
                     testGraphIndex = random.randrange(0, popSize)
-                    while(graphs[testGraphIndex]['timesUsed'] >= 10):
+                    while(graphs[testGraphIndex]['timesUsed'] >= graphSampleSize):
                         testGraphIndex = random.randrange(0, popSize)
                     retvalList = checkFitness(fitFunction, graphs[testGraphIndex], testCut['cut'], penalty)
                     cut['fitness'] = cut['fitness'] + retvalList[0]
@@ -494,10 +492,6 @@ def main():
                         checks = checks + 1
                     else:
                         break
-                #for i in range(0, len(population)):
-                    #print 'cut Used : ' + str(population[i]['timesUsed']) + '\t' + 'graph Used : ' + str(graphs[i]['timesUsed']) + '\t' + str(i)
-                #print '****************'
-                #pdb.set_trace()
 
             #find the average fitness by dividing by the number of times used and reset times used
             localAverageFitness, localAverageGraphFitness = 0, 0
@@ -517,7 +511,6 @@ def main():
                 localAverageFitness = localAverageFitness + population[i]['fitness']
                 localAverageGraphFitness = localAverageGraphFitness + graphs[i]['fitness']
 
-            #pdb.set_trace()
             #Survival Selection
             population = selectSurvivors(survivalSelection, population, numSurvive, k)
             graphs = selectSurvivors(survivalSelection, graphs, numSurvive, k)
@@ -529,8 +522,6 @@ def main():
             localBestGraphFitness = ordered2[-1]['fitness']
             localBestGraph = ordered2[-1]
             log.write('\n' + str(checks) + '\t' + str(localAverageFitness) + '\t' + str(localBestFitness) + '\t' + str(localAverageGraphFitness) + '\t' + str(localBestGraphFitness))
-            #average.write(str(numParents))
-            #best.write(str(localBestCut) + '\n')
 
             if (localBestFitness > globalBest):
                 globalBest = localBestFitness
