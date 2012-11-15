@@ -213,8 +213,8 @@ def mutateGraph(size, chance, data):
 #returns a recombined version of x and y according to the recombination variable
 def recombine(recombination, n, x, y):
     if(recombination == 'uniform crossover'):
-        val1 = copy.deepcopy(list(str(x)))
-        val2 = copy.deepcopy(list(str(y)))
+        val1 = list(str(x))
+        val2 = list(str(y))
         retval = []
         for bit in range(0, len(val1)):
             if bool(random.getrandbits(1)):
@@ -223,8 +223,8 @@ def recombine(recombination, n, x, y):
             digits2 = [int(x) for x in val2]
 
     elif (recombination == 'n-point crossover'):
-        val1 = copy.deepcopy(list(str(x)))
-        val2 = copy.deepcopy(list(str(y)))
+        val1 = list(str(x))
+        val2 = list(str(y))
         retval = []
         index = random.randrange(0, len(val1) - n)
         for bit in range(0, n):
@@ -267,7 +267,6 @@ def selectSurvivors(survivalSelection, population, numSurvive, k):
         return retval
 
     elif(survivalSelection == 'k-Tournament Selection without replacement'):
-        #findDomLevel(population)
         while (len(retval) < numSurvive):
             tournament = []
             while (len(tournament) < k):
@@ -276,7 +275,7 @@ def selectSurvivors(survivalSelection, population, numSurvive, k):
                 if(population[chalenger] not in tournament):
                     tournament.append(population[chalenger])
             #pick top one
-            ordered = sorted(tournament, key=itemgetter('DomLevel'), reverse=True)
+            ordered = sorted(tournament, key=itemgetter('fitness'), reverse=True)
             retval.append(ordered[0])
         return retval
 
@@ -440,8 +439,6 @@ def main():
                     combo['fitness'] = 0.0
                     combo['timesUsed'] = 0
                     cutChildren.append(combo)
-                    combo['cut'] = cuts[1]
-                    cutChildren.append(combo)
             #recombination for graphs
             while (len(graphChildren) < (numChlidren / 2)):
                 mom = random.randrange(0, len(graphParents) - 1)
@@ -450,7 +447,7 @@ def main():
                     graphChildren.append(recombineGraph(numNodes, 10, graphParents[mom], graphParents[dad]))
 
             #mutation
-            mutantChildren = cutChildren[:]
+            mutantChildren = copy.deepcopy(cutChildren)
             while (len(cutChildren) < numChlidren):
                 mutantChild = mutantChildren.pop()
                 mutantChildCut = mutate(mutation, mutantChild['cut'])
@@ -476,9 +473,7 @@ def main():
             for i in range(0, len(population)):
                 population[i]['fitness'] = 0.0
                 graphs[i]['fitness'] = 0.0
-                #print str(population[i]['timesUsed']) + "\t" + str(graphs[i]['timesUsed']) + '\t' + str(i)
 
-            #pdb.set_trace()
             #evaluate new fitnesses
             for cut in population:
                 for i in range(0, graphSampleSize):
@@ -493,24 +488,26 @@ def main():
                         graphs[testGraphIndex]['fitness'] = graphs[testGraphIndex]['fitness'] + (1 / retvalList[0])
                         graphs[testGraphIndex]['timesUsed'] = graphs[testGraphIndex]['timesUsed'] + 1
                         checks = checks + 1
-                    else:
-                        print "error"
-                        break
-                for i in range(0, len(graphs)):
-                    print str(population[i]['timesUsed']) + "\t" + str(graphs[i]['timesUsed']) + '\t' + str(i)
-                print 'done'
-                pdb.set_trace()
 
-            pdb.set_trace()
             #find the average fitness by dividing by the number of times used and reset times used
-            for i in range(0, popSize):
-                population[i]['fitness'] = population[i]['fitness'] / population[i]['timesUsed']
-                population[i]['timesUsed'] = 0
-                graphs[i]['fitness'] = graphs[i]['fitness'] / graphs[i]['timesUsed']
-                graphs[i]['timesUsed'] = 0
+            for i in range(0, len(population)):
+                if(population[i]['timesUsed'] != 0):
+                    population[i]['fitness'] = population[i]['fitness'] / population[i]['timesUsed']
+                    population[i]['timesUsed'] = 0
+                else:
+                    population[i]['fitness'] = -100000
+                    population[i]['timesUsed'] = 0
+                if(graphs[i]['timesUsed'] != 0):
+                    graphs[i]['fitness'] = graphs[i]['fitness'] / graphs[i]['timesUsed']
+                    graphs[i]['timesUsed'] = 0
+                else:
+                    graphs[i]['fitness'] = -100000
+                    graphs[i]['timesUsed'] = 0
 
+            #pdb.set_trace()
             #Survival Selection
             population = selectSurvivors(survivalSelection, population, numSurvive, k)
+            graphs = selectSurvivors(survivalSelection, graphs, numSurvive, k)
 
             #put the answer in the answer file
             answer = open(answerFile, 'w')
@@ -519,8 +516,8 @@ def main():
             ordered = sorted(population, key=itemgetter('fitness'))
             localBest = ordered[-1]['fitness']
             localBestCut = ordered[-1]['cut']
-            log.write('\n' + str(checks) + '\t' + str(sumAverage / (numChlidren + numParents)) + '\t' + str(localBest))
-            average.write(str(sumAverage / (numChlidren + numParents)) + '\n')
+            log.write('\n' + str(checks) + '\t' + str(localBest))
+            average.write(str(numParents))
             best.write(str(localBest) + '\n')
 
             if (localBest > globalBest):
