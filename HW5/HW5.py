@@ -464,7 +464,7 @@ def main():
                 population = cutParents + cutChildren
                 graphs = graphParents + graphChildren
             elif(survivalStrategy == 'comma'):
-                population = cutChildren
+                population = copy.deepcopy(cutChildren)
                 graphs = graphChildren
             else:
                 print 'Error: no survival strategy selected'
@@ -480,7 +480,7 @@ def main():
                     if(cut['timesUsed'] < graphSampleSize):
                         testCut = cut
                         testGraphIndex = random.randrange(0, len(graphs))
-                        while(graphs[testGraphIndex]['timesUsed'] >= graphSampleSize):
+                        while(graphs[testGraphIndex]['timesUsed'] >= graphSampleSize + 1):
                             testGraphIndex = random.randrange(0, len(graphs))
                         retvalList = checkFitness(fitFunction, graphs[testGraphIndex], testCut['cut'], penalty)
                         cut['fitness'] = cut['fitness'] + retvalList[0]
@@ -488,7 +488,14 @@ def main():
                         graphs[testGraphIndex]['fitness'] = graphs[testGraphIndex]['fitness'] + (1 / retvalList[0])
                         graphs[testGraphIndex]['timesUsed'] = graphs[testGraphIndex]['timesUsed'] + 1
                         checks = checks + 1
+                    else:
+                        break
+                #for i in range(0, len(population)):
+                    #print 'cut Used : ' + str(population[i]['timesUsed']) + '\t' + 'graph Used : ' + str(graphs[i]['timesUsed']) + '\t' + str(i)
+                #print '****************'
+                #pdb.set_trace()
 
+            print checks
             #find the average fitness by dividing by the number of times used and reset times used
             for i in range(0, len(population)):
                 if(population[i]['timesUsed'] != 0):
