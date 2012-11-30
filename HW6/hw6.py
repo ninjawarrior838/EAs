@@ -1,24 +1,54 @@
 import sys
 import random
 import time
+import pdb
 import copy
+from math import sin, cos
 
 class Tree:
-    def __init__(self, cargo, level=0, left=None, right=None):
+    def __init__(self, cargo, left=None, right=None, level=0, value=0):
         self.cargo = cargo
         self.left = left
         self.right = right
         self.level = level
+        self.value = value
 
     def __str__(self):
         return str(self.cargo)
 
 
-def print_tree_inorder(tree):
+def print_tree_inorder(tree, level=0):
     if tree == None: return
-    print_tree_inorder(tree.left)
-    print str(tree.cargo),
-    print_tree_inorder(tree.right)
+    print_tree_inorder(tree.left, level+1)
+    print '   ' * level + str(tree.cargo)
+    print_tree_inorder(tree.right, level+1)
+
+
+def evaluateTree(X, tree):
+    if tree.left == None and tree.right == None:
+        if tree.cargo == 'x':
+            tree.value = X
+        else:
+            tree.value = float(tree.cargo)
+        return
+
+    evaluateTree(X, tree.left)
+    evaluateTree(X, tree.right)
+    if tree.cargo == '+':
+        tree.value = tree.left.value + tree.right.value
+    elif tree.cargo == '-':
+        tree.value = tree.left.value - tree.right.value
+    elif tree.cargo == '*':
+        tree.value = tree.left.value * tree.right.value
+    elif tree.cargo == '/':
+        tree.value = tree.left.value / tree.right.value
+    elif tree.cargo == '**':
+        tree.value = tree.left.value ** tree.right.value
+    elif tree.cargo == 'sin':
+        tree.value = sin(tree.left.value / tree.right.value)
+    elif tree.cargo == 'cos':
+        tree.value = cos(tree.left.value / tree.right.value)
+    return
 
 
 def getTerminal():
@@ -37,14 +67,19 @@ def getNonTerminal():
 
 def getInitialTree(maxDepth, tree):
     if tree.level == maxDepth:
-        tree.right = Tree(getTerminal)
-        tree.left = Tree(getTerminal)
+        tree.right = Tree(getTerminal())
+        tree.left = Tree(getTerminal())
         return
 
     tree.cargo = getNonTerminal()
-    newTree = Tree(getNonTerminal())
-    newTree.level = tree.level + 1
-    getInitialTree(maxDepth, newTree)
+    leftNode = Tree(getNonTerminal())
+    rightNode = Tree(getNonTerminal())
+    leftNode.level = tree.level + 1
+    rightNode.level = tree.level + 1
+    getInitialTree(maxDepth, leftNode)
+    getInitialTree(maxDepth, rightNode)
+    tree.left = leftNode
+    tree.right = rightNode
     return
 
 
@@ -91,10 +126,12 @@ def main():
     children = int(config.readline().strip())
 
     fred = Tree('*')
-    getInitialTree(4, fred)
+    getInitialTree(maxInitialDepth, fred)
 
     print_tree_inorder(fred)
 
+    evaluateTree(1, fred)
+    print fred.value
     return
 
 
