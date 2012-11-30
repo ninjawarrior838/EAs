@@ -17,7 +17,7 @@ class Tree:
 def print_tree_inorder(tree):
     if tree == None: return
     print_tree_inorder(tree.left)
-    print tree.cargo,
+    print str(tree.cargo),
     print_tree_inorder(tree.right)
 
 
@@ -30,19 +30,33 @@ def getTerminal():
 
 
 def getNonTerminal():
-    retval = str
     values = ['+', '-', '*', '/', '**', 'sin', 'cos']
     index = random.randrange(0, len(values))
-    return retval[index]
+    return values[index]
 
 
 def getInitialTree(maxDepth, tree):
-    if tree.level == maxDepth: return
-    leftNode = Tree(getTerminal)
-    rightNode = Tree(getTerminal)
-    newTree = Tree(getNonTerminal(), leftNode, rightNode)
-    newTree.level = newTree.level + 1
+    if tree.level == maxDepth:
+        tree.right = Tree(getTerminal)
+        tree.left = Tree(getTerminal)
+        return
+
+    tree.cargo = getNonTerminal()
+    newTree = Tree(getNonTerminal())
+    newTree.level = tree.level + 1
     getInitialTree(maxDepth, newTree)
+    return
+
+
+#returns the time in miliseconds
+def getTime():
+    return int(round(time.time() * 1000))
+
+
+#returns the difference of the current time and x
+def timer(x):
+    return ((int(round(time.time() * 1000))) - x)
+
 
 def main():
     # check for the last comand line argument
@@ -70,7 +84,16 @@ def main():
         random.seed(int(float(seedT)))
     maxInitialDepth = int(config.readline().strip())
     maxDepth = int(config.readline().strip())
+    runs = int(config.readline().strip())
+    evals = int(config.readline().strip())
+    populationSize = int(config.readline().strip())
+    parents = int(config.readline().strip())
+    children = int(config.readline().strip())
 
+    fred = Tree('*')
+    getInitialTree(4, fred)
+
+    print_tree_inorder(fred)
 
     return
 
