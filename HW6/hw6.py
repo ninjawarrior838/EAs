@@ -17,12 +17,33 @@ class Tree:
         return str(self.cargo)
 
 
-def print_tree_inorder(tree, level=0):
+def printTreeInorder(tree, level=0):
     if tree == None: return
-    print_tree_inorder(tree.left, level+1)
+    printTreeInorder(tree.left, level+1)
     print '   ' * level + str(tree.cargo)
-    print_tree_inorder(tree.right, level+1)
+    printTreeInorder(tree.right, level+1)
 
+
+def outputTree(tree):
+    if tree == None: return
+    if tree.cargo == 'sin' or tree.cargo == 'cos':
+        print '(',
+        print str(tree.cargo) + '(',
+        outputTree(tree.left)
+        print ') )',
+    elif tree.cargo == '**':
+        print '(',
+        print 'power' + '(',
+        outputTree(tree.left)
+        print ',',
+        outputTree(tree.right)
+        print ') )',
+    else:
+        print '(',
+        outputTree(tree.left)
+        print str(tree.cargo),
+        outputTree(tree.right)
+        print ')',
 
 def evaluateTree(X, tree):
     if tree.left == None and tree.right == None:
@@ -41,13 +62,20 @@ def evaluateTree(X, tree):
     elif tree.cargo == '*':
         tree.value = tree.left.value * tree.right.value
     elif tree.cargo == '/':
+        if tree.right.value == 0:
+            tree.value = 0
         tree.value = tree.left.value / tree.right.value
     elif tree.cargo == '**':
         tree.value = tree.left.value ** tree.right.value
     elif tree.cargo == 'sin':
-        tree.value = sin(tree.left.value / tree.right.value)
+        tree.value = sin(tree.left.value)
     elif tree.cargo == 'cos':
-        tree.value = cos(tree.left.value / tree.right.value)
+        tree.value = cos(tree.left.value)
+    return
+
+
+def evaluateFitness(data, test):
+
     return
 
 
@@ -55,7 +83,7 @@ def getTerminal():
     if bool(random.getrandbits(1)):
         retval = 'x'
     else:
-        retval = str(random.randrange(0, 30))
+        retval = str(random.randrange(1, 30))
     return retval
 
 
@@ -74,12 +102,18 @@ def getInitialTree(maxDepth, tree):
     tree.cargo = getNonTerminal()
     leftNode = Tree(getNonTerminal())
     rightNode = Tree(getNonTerminal())
-    leftNode.level = tree.level + 1
-    rightNode.level = tree.level + 1
-    getInitialTree(maxDepth, leftNode)
-    getInitialTree(maxDepth, rightNode)
-    tree.left = leftNode
-    tree.right = rightNode
+    if tree.cargo != 'sin' or tree.cargo != 'cos':
+        rightNode.level = tree.level + 1
+        leftNode.level = tree.level + 1
+        getInitialTree(maxDepth, rightNode)
+        getInitialTree(maxDepth, leftNode)
+        tree.right = rightNode
+        tree.left = leftNode
+    else:
+        leftNode.level = tree.level + 1
+        getInitialTree(maxDepth, leftNode)
+        tree.left = leftNode
+
     return
 
 
@@ -106,7 +140,7 @@ def main():
     log.write("Result Log\n\n")
 
     answerFile = config.readline().strip()
-    dataFile = config.readline().strip()
+    dFile = config.readline().strip()
     # check if a seed is provided, if 0, seed random from time in miliseconds
     seedT = config.readline().strip()
     if (seedT) == '0':
@@ -125,13 +159,24 @@ def main():
     parents = int(config.readline().strip())
     children = int(config.readline().strip())
 
-    fred = Tree('*')
+    #read data file
+    dataFile = open(dFile, 'r')
+    dataFile.readline().strip()
+    numPairs = int(dataFile.readline().strip())
+    dataFile.readline().strip()
+    data = []
+    for i in range(numPairs):
+        temp = dataFile.readline().strip().split(', ')
+        data.append(temp)
+
+    fred = Tree(getNonTerminal())
     getInitialTree(maxInitialDepth, fred)
 
-    print_tree_inorder(fred)
+    printTreeInorder(fred)
 
     evaluateTree(1, fred)
     print fred.value
+    outputTree(fred)
     return
 
 
