@@ -6,12 +6,13 @@ import copy
 from math import sin, cos
 
 class Tree:
-    def __init__(self, cargo, left=None, right=None, level=0, value=0):
+    def __init__(self, cargo, left=None, right=None, level=0, value=0, fitness=0):
         self.cargo = cargo
         self.left = left
         self.right = right
         self.level = level
         self.value = value
+        self.fitness = fitness
 
     def __str__(self):
         return str(self.cargo)
@@ -75,7 +76,12 @@ def evaluateTree(X, tree):
 
 
 def evaluateFitness(data, test):
-
+    averageError = 0.0
+    for value in data:
+        evaluateTree(value[0], test)
+        averageError += ((test.value - value[1]) ** 2)
+    if averageError != 0:
+        test.fitness = -averageError
     return
 
 
@@ -166,16 +172,19 @@ def main():
     dataFile.readline().strip()
     data = []
     for i in range(numPairs):
-        temp = dataFile.readline().strip().split(', ')
+        temp = dataFile.readline().strip().split(',')
+        temp[0] = float(temp[0])
+        temp[1] = float(temp[1])
         data.append(temp)
 
     fred = Tree(getNonTerminal())
-    getInitialTree(maxInitialDepth, fred)
-
+    #getInitialTree(maxInitialDepth, fred)
+    fred = Tree('**', Tree(2), Tree('+', Tree('x'), Tree('1')))
     printTreeInorder(fred)
 
-    evaluateTree(1, fred)
-    print fred.value
+    #evaluateTree(1, fred)
+    evaluateFitness(data, fred)
+    print fred.fitness
     outputTree(fred)
     return
 
