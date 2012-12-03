@@ -1,18 +1,18 @@
 import sys
 import random
 import time
-import pdb
 import copy
 from math import sin, cos
 
 class Tree:
-    def __init__(self, cargo, left=None, right=None, level=0, value=0, fitness=0):
+    def __init__(self, cargo, left=None, right=None, level=0, value=0, fitness=0, fitP=0):
         self.cargo = cargo
         self.left = left
         self.right = right
         self.level = level
         self.value = value
         self.fitness = fitness
+        self.fitP = fitP
 
     def __str__(self):
         return str(self.cargo)
@@ -25,26 +25,24 @@ def printTreeInorder(tree, level=0):
     printTreeInorder(tree.right, level+1)
 
 
-def outputTree(tree):
+def outputTree(tree, answer):
     if tree == None: return
     if tree.cargo == 'sin' or tree.cargo == 'cos':
-        print '(',
-        print str(tree.cargo) + '(',
-        outputTree(tree.left)
-        print ') )',
+        answer.write('(' + str(tree.cargo) + '(')
+        outputTree(tree.left, answer)
+        answer.write(') )')
     elif tree.cargo == '**':
-        print '(',
-        print 'power' + '(',
-        outputTree(tree.left)
-        print ',',
-        outputTree(tree.right)
-        print ') )',
+        answer.write('( power (')
+        outputTree(tree.left, answer)
+        answer.write(',')
+        outputTree(tree.right, answer)
+        answer.write(') )')
     else:
-        print '(',
-        outputTree(tree.left)
-        print str(tree.cargo),
-        outputTree(tree.right)
-        print ')',
+        answer.write('(')
+        outputTree(tree.left, answer)
+        answer.write(str(tree.cargo))
+        outputTree(tree.right, answer)
+        answer.write(')')
 
 def evaluateTree(X, tree):
     if tree.left == None and tree.right == None:
@@ -65,9 +63,13 @@ def evaluateTree(X, tree):
     elif tree.cargo == '/':
         if tree.right.value == 0:
             tree.value = 0
-        tree.value = tree.left.value / tree.right.value
+        else:
+            tree.value = tree.left.value / tree.right.value
     elif tree.cargo == '**':
-        tree.value = tree.left.value ** tree.right.value
+        if tree.left.value < 0 and not float(tree.right.value).is_integer():
+            tree.value = 0
+        else:
+            tree.value = tree.left.value ** tree.right.value
     elif tree.cargo == 'sin':
         tree.value = sin(tree.left.value)
     elif tree.cargo == 'cos':
@@ -82,6 +84,8 @@ def evaluateFitness(data, test):
         averageError += ((test.value - value[1]) ** 2)
     if averageError != 0:
         test.fitness = -averageError
+    else:
+        test.fitness = 0
     return
 
 
@@ -89,12 +93,12 @@ def getTerminal():
     if bool(random.getrandbits(1)):
         retval = 'x'
     else:
-        retval = str(random.randrange(1, 30))
+        retval = str(random.randrange(1, 5))
     return retval
 
 
 def getNonTerminal():
-    values = ['+', '-', '*', '/', '**', 'sin', 'cos']
+    values = ['+', '-', '*', '/', 'sin', 'cos']
     index = random.randrange(0, len(values))
     return values[index]
 
@@ -121,6 +125,40 @@ def getInitialTree(maxDepth, tree):
         tree.left = leftNode
 
     return
+
+
+#tree is the tree to be mutated passed by reference
+def mutate(tree, maxDepth):
+    if tree == None: return
+    chance = 10
+    if (random.randrange(0, chance) == 0):
+        depth = tree.level
+        numNewLevels = random.randrange(0, 2)
+        if depth + numNewLevels <= maxDepth:
+            getInitialTree((depth + numNewLevels), tree)
+        else:
+            mutate(tree, maxDepth)
+    else:
+        mutate(tree.left, maxDepth)
+        mutate(tree.right, maxDepth)
+
+
+def recombine(tree1, tree2):
+
+    return
+
+
+def getParents(population, numParents):
+    retval, populationAverage= [], 0.0
+    #fitness proportional selection
+    for tree in population:
+        populationAverage += tree.fitness
+    for tree in population:
+        tree.fitP = (tree.fitness / populationAverage)
+    population.sort(key = lambda x: x.fitP)
+    for i in range(numParents):
+        retval.append(copy.deepcopy(population[i]))
+    return retval
 
 
 #returns the time in miliseconds
@@ -153,16 +191,18 @@ def main():
         seed = getTime()
         log.write("\nUsing seed of: \t" + str(seed))
         random.seed(seed)
+        log.flush()
     else:
         log.write("\nUsing seed of: \t")
         log.write(str(seedT))
         random.seed(int(float(seedT)))
+        log.flush()
     maxInitialDepth = int(config.readline().strip())
     maxDepth = int(config.readline().strip())
     runs = int(config.readline().strip())
-    evals = int(config.readline().strip())
+    maxEvals = int(config.readline().strip())
     populationSize = int(config.readline().strip())
-    parents = int(config.readline().strip())
+    numParents = int(config.readline().strip())
     children = int(config.readline().strip())
 
     #read data file
@@ -177,15 +217,61 @@ def main():
         temp[1] = float(temp[1])
         data.append(temp)
 
-    fred = Tree(getNonTerminal())
-    #getInitialTree(maxInitialDepth, fred)
-    fred = Tree('**', Tree(2), Tree('+', Tree('x'), Tree('1')))
-    printTreeInorder(fred)
+    globalBestTree = Tree('*')
+    globalBestTree.fitness = -100000000
 
-    #evaluateTree(1, fred)
-    evaluateFitness(data, fred)
-    print fred.fitness
-    outputTree(fred)
+    for run in range(runs):
+        evals = 0
+        population = []
+        log.write('\n\nRun: ' + str(run + 1))
+
+        #innitialisation
+        for tree in range(populationSize):
+            fred = Tree(getNonTerminal())
+            getInitialTree(maxInitialDepth, fred)
+            population.append(fred)
+        for tree in population:
+            evaluateFitness(data, tree)
+
+        while evals <= maxEvals:
+            newPopulation = []
+            #parent selection
+            parents = getParents(population, numParents)
+
+            while len(newPopulation) < populationSize:
+                fred = random.randrange(len(parents))
+                bob = copy.deepcopy(parents[fred])
+                mutate(bob, maxDepth)
+                newPopulation.append(bob)
+
+            #evaluate new fitnesses
+            for tree in newPopulation:
+                evaluateFitness(data, tree)
+                evals += 1
+
+            localBestTree, sumFit = population[0], 0
+            for tree in population:
+                sumFit += tree.fitness
+                if tree.fitness > localBestTree.fitness:
+                    localBestTree = tree
+            averageFit = sumFit / len(population)
+            if localBestTree.fitness > globalBestTree.fitness:
+                globalBestTree = localBestTree
+
+            #logging and output
+            log.write('\n' + str(evals) + '\t' + str(averageFit) + '\t' + str(localBestTree.fitness))
+            log.flush()
+            answer = open(answerFile, 'w')
+            answer.close()
+
+            answer = open(answerFile, 'a+')
+            answer.write(str(globalBestTree.fitness) + '\n')
+            outputTree(globalBestTree, answer)
+            answer.write('\n\n')
+            answer.close()
+
+            population = newPopulation
+
     return
 
 
