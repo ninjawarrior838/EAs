@@ -4,6 +4,7 @@ import time
 import copy
 from math import sin, cos
 
+
 class Tree:
     def __init__(self, cargo, left=None, right=None, level=0, value=0, fitness=0, fitP=0):
         self.cargo = cargo
@@ -19,14 +20,16 @@ class Tree:
 
 
 def printTreeInorder(tree, level=0):
-    if tree == None: return
-    printTreeInorder(tree.left, level+1)
+    if tree is None:
+        return
+    printTreeInorder(tree.left, level + 1)
     print '   ' * level + str(tree.cargo)
-    printTreeInorder(tree.right, level+1)
+    printTreeInorder(tree.right, level + 1)
 
 
 def outputTree(tree, answer):
-    if tree == None: return
+    if tree is None:
+        return
     if tree.cargo == 'sin' or tree.cargo == 'cos':
         answer.write('(' + str(tree.cargo) + '(')
         outputTree(tree.left, answer)
@@ -44,8 +47,9 @@ def outputTree(tree, answer):
         outputTree(tree.right, answer)
         answer.write(')')
 
+
 def evaluateTree(X, tree):
-    if tree.left == None and tree.right == None:
+    if tree.left is None and tree.right is None:
         if tree.cargo == 'x':
             tree.value = X
         else:
@@ -128,28 +132,27 @@ def getInitialTree(maxDepth, tree):
 
 
 #tree is the tree to be mutated passed by reference
-def mutate(tree, maxDepth):
-    if tree == None: return
-    chance = 10
+def mutate(tree, maxDepth, chance):
+    if tree is None:
+        return
     if (random.randrange(0, chance) == 0):
         depth = tree.level
         numNewLevels = random.randrange(0, 2)
         if depth + numNewLevels <= maxDepth:
             getInitialTree((depth + numNewLevels), tree)
         else:
-            mutate(tree, maxDepth)
+            mutate(tree, maxDepth, chance)
     else:
-        mutate(tree.left, maxDepth)
-        mutate(tree.right, maxDepth)
+        mutate(tree.left, maxDepth, chance)
+        mutate(tree.right, maxDepth, chance)
 
 
 def recombine(tree1, tree2):
-
     return
 
 
 def getParents(population, numParents):
-    retval, populationAverage= [], 0.0
+    retval, populationAverage = [], 0.0
     #fitness proportional selection
     for tree in population:
         populationAverage += tree.fitness
@@ -158,6 +161,36 @@ def getParents(population, numParents):
     population.sort(key = lambda x: x.fitP)
     for i in range(numParents):
         retval.append(copy.deepcopy(population[i]))
+    return retval
+
+
+# find if two trees are genotipicly diverse, never actually called
+def isDistinct(tree1, tree2):
+    if tree1 is None and tree2 is None:
+        return True
+    elif tree1.cargo == tree2.cargo:
+        return (isDistinct(tree1.left, tree2.left) and isDistinct(tree1.right, tree2.right))
+    else:
+        return False
+
+
+#calculates the number of phenotypicly distinct trees in the population within the given threashold
+def getDiversity(pop, data, threshold):
+    retval = 1
+    population = copy.deepcopy(pop)
+    while population:
+        tree1 = population.pop()
+        for tree2 in range(len(population)):
+            distinct = False
+            for value in data:
+                evaluateTree(value[0], tree1)
+                evaluateTree(value[0], population[tree2])
+                if abs(tree1.value - population[tree2].value) >= threshold:
+                    retval += 1
+                    distinct = True
+                    break
+            if distinct is True:
+                break
     return retval
 
 
@@ -204,6 +237,9 @@ def main():
     populationSize = int(config.readline().strip())
     numParents = int(config.readline().strip())
     children = int(config.readline().strip())
+    dynamicParameter = config.readline().strip()
+    #chance to mutate at a specific node. inverted
+    chance = 10
 
     #read data file
     dataFile = open(dFile, 'r')
@@ -221,7 +257,7 @@ def main():
     globalBestTree.fitness = -100000000
 
     for run in range(runs):
-        evals = 0
+        evals, chance = 0, 10
         population = []
         log.write('\n\nRun: ' + str(run + 1))
 
@@ -234,14 +270,14 @@ def main():
             evaluateFitness(data, tree)
 
         while evals <= maxEvals:
-            newPopulation = []
+            newPopulation, previousAverageFit = [], -10000000000
             #parent selection
             parents = getParents(population, numParents)
 
             while len(newPopulation) < populationSize:
                 fred = random.randrange(len(parents))
                 bob = copy.deepcopy(parents[fred])
-                mutate(bob, maxDepth)
+                mutate(bob, maxDepth, chance)
                 newPopulation.append(bob)
 
             #evaluate new fitnesses
@@ -249,6 +285,7 @@ def main():
                 evaluateFitness(data, tree)
                 evals += 1
 
+            #find average and check if there is a new global best
             localBestTree, sumFit = population[0], 0
             for tree in population:
                 sumFit += tree.fitness
@@ -258,11 +295,21 @@ def main():
             if localBestTree.fitness > globalBestTree.fitness:
                 globalBestTree = localBestTree
 
+            #calculate diversity based on the threshold
+            diversity = getDiversity(population, data, 0.2)
+
+            if dynamicParameter == 'chance':
+                if previousAverageFit > averageFit and chance > 1:
+                    chance -= 1
+                else:
+                    chance += 1
+
             #logging and output
-            log.write('\n' + str(evals) + '\t' + str(averageFit) + '\t' + str(localBestTree.fitness))
+            log.write('\n' + str(evals) + '\t' + str(averageFit) + '\t' + str(localBestTree.fitness) + '\t' + str(diversity) + '\t' + str(chance))
             log.flush()
             answer = open(answerFile, 'w')
             answer.close()
+            previousAverageFit = averageFit
 
             answer = open(answerFile, 'a+')
             answer.write(str(globalBestTree.fitness) + '\n')
